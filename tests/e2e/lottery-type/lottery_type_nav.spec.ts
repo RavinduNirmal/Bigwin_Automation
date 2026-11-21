@@ -88,7 +88,12 @@ combinedTest.describe('Lottery Type Navigation & Table Display', () => {
 
     const lotteryType = await createUniqueLotteryType(lotteryTypePage, testLotteryTypeData, 'ACTIVE', { verifySaved: true });
     await lotteryTypePage.openLogs(lotteryType.code);
-    await expect(page, 'Logs should open the audit log page').toHaveURL(/\/dashboard\/audit/, { timeout: 30000 });
+    await expect(page, 'Logs should open an audit log page').toHaveURL(/\/dashboard\/audit/, { timeout: 30000 });
+    // wait until the page has rendered either its content (a logs table) or the 404 message
+    await expect(lotteryTypePage.notFoundMessage().or(lotteryTypePage.dataTable()).first()).toBeVisible({ timeout: 30000 });
+    await expect(lotteryTypePage.notFoundMessage(), `Logs opened ${page.url()}, which must be a real page, not "Nothing here!" (404)`)
+      .toBeHidden();
+    await expect(lotteryTypePage.dataTable(), 'The audit log page should show its logs table').toBeVisible();
     await TestHelper.step(page, 'Audit Log', `Opened from "${lotteryType.code}"`);
     TestHelper.success('Logs opens the audit log');
   });
