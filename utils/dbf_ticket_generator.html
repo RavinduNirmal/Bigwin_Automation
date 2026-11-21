@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DBF ticket and winning file generator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.2.0/tabler-icons.min.css" />
+<style>
+  :root{
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --surface-0:#F5F4F1; --surface-1:#FAFAF8; --surface-2:#FFFFFF;
+    --text-primary:#1A1A18; --text-secondary:#5F5E5A; --text-muted:#8B8A85;
+    --border:rgba(0,0,0,0.12); --border-strong:rgba(0,0,0,0.22);
+    --bg-accent:#E6F1FB; --text-accent:#185FA5; --fill-accent:#378ADD; --on-accent:#FFFFFF;
+    --bg-success:#EAF3DE; --border-success:#C0DD97; --text-success:#3B6D11;
+    --radius:8px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-0:#141413; --surface-1:#1F1F1E; --surface-2:#262625;
+      --text-primary:#F0EFEC; --text-secondary:#B4B2A9; --text-muted:#888780;
+      --border:rgba(255,255,255,0.14); --border-strong:rgba(255,255,255,0.26);
+      --bg-accent:#0C447C; --text-accent:#B5D4F4; --fill-accent:#378ADD; --on-accent:#FFFFFF;
+      --bg-success:#27500A; --border-success:#3B6D11; --text-success:#C0DD97;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:0 16px;background:var(--surface-0);color:var(--text-primary);font-family:var(--font-sans);font-size:15px;line-height:1.6;}
+  .page{max-width:720px;margin:0 auto;}
+  input,select,textarea,button{font-family:inherit;color:var(--text-primary);background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 10px;font-size:14px;height:36px;}
+  textarea{height:auto;padding:8px 10px;}
+  input[type=checkbox],input[type=radio]{height:auto;width:auto;accent-color:var(--fill-accent);}
+  select{height:36px;}
+  button{cursor:pointer;background:transparent;}
+  button:hover{background:var(--surface-1);}
+  input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px var(--bg-accent);border-color:var(--fill-accent);}
+  .wrap { padding: 1.5rem 0; font-family: var(--font-sans); }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+  .section { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .section h3 { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 0 0 1rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .field-row label { font-size: 13px; color: var(--text-secondary); min-width: 110px; }
+  .field-row .hint { font-size: 11px; color: var(--text-muted); }
+  .badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:4px; background:var(--bg-accent); color:var(--text-accent); font-weight:500; }
+  .preview-table { width:100%; border-collapse:collapse; font-size:12px; font-family:var(--font-mono); }
+  .preview-table th { text-align:left; padding:6px 8px; color:var(--text-muted); font-weight:500; border-bottom:0.5px solid var(--border); font-family:var(--font-sans); font-size:11px; }
+  .preview-table td { padding:5px 8px; color:var(--text-primary); border-bottom:0.5px solid var(--border); }
+  .preview-table tr:last-child td { border-bottom:none; }
+  .btn-generate { background:var(--fill-accent); color:var(--on-accent); border:none; border-radius:var(--radius); padding:10px 20px; font-size:14px; font-weight:500; cursor:pointer; width:100%; height:auto; }
+  .btn-generate:hover { opacity:0.9; background:var(--fill-accent); }
+  .btn-generate:disabled { opacity:0.5; cursor:not-allowed; }
+  .download-box { background:var(--bg-success); border:0.5px solid var(--border-success); border-radius:var(--radius); padding:12px 16px; margin-top:12px; display:none; align-items:center; gap:12px; }
+  .download-box a { color:var(--text-success); font-weight:500; font-size:14px; text-decoration:none; }
+  .download-box a:hover { text-decoration:underline; }
+  .numbers-config { background:var(--surface-1); border:0.5px solid var(--border); border-radius:var(--radius); padding:10px 12px; margin-top:8px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .chk-row { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer; margin-top:6px; }
+  .status { font-size:13px; color:var(--text-secondary); text-align:center; margin-top:8px; min-height:20px; }
+  .tier-head { display:grid; grid-template-columns:minmax(0,1.1fr) 64px minmax(0,1.2fr) minmax(0,1.1fr) 28px; gap:8px; font-size:11px; color:var(--text-muted); padding:0 2px 6px; }
+  .tier-row { display:grid; grid-template-columns:minmax(0,1.1fr) 64px minmax(0,1.2fr) minmax(0,1.1fr) 28px; gap:8px; margin-bottom:8px; align-items:center; }
+  .tier-row input, .tier-row select { font-size:12px; height:32px; min-width:0; width:100%; }
+  .icon-btn { border:0.5px solid var(--border); background:var(--surface-1); color:var(--text-secondary); border-radius:var(--radius); cursor:pointer; height:32px; width:28px; padding:0; font-size:14px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-top:4px; }
+  .stat { background:var(--surface-1); border-radius:var(--radius); padding:12px 14px; }
+  .stat .k { font-size:12px; color:var(--text-secondary); margin-bottom:4px; }
+  .stat .v { font-size:20px; font-weight:500; color:var(--text-primary); }
+  .strip { position:relative; height:34px; background:var(--surface-1); border-radius:var(--radius); margin-top:10px; overflow:hidden; }
+  .strip i { position:absolute; top:4px; width:2px; height:26px; }
+  .mini { font-size:11px; color:var(--text-muted); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="wrap">
+  <h2 class="sr-only">Two-part generator: builds a draw ticket DBF file and a matching winning-prize DBF file.</h2>
+
+  <div class="section">
+    <h3>1 &middot; Ticket ID (BARCODE)</h3>
+    <div class="field-row">
+      <label>Starting ID</label>
+      <input type="text" id="startId" value="1867" style="max-width:160px;" />
+      <span class="hint">sequential +1</span>
+    </div>
+    <div class="field-row">
+      <label>Prefix</label>
+      <input type="text" id="prefix" value="0881" placeholder="e.g. 0881" style="max-width:120px;" />
+      <label style="min-width:auto;">Pad number to</label>
+      <input type="number" id="padTo" value="7" min="0" max="14" style="max-width:80px;" />
+      <span class="hint">0 = off</span>
+    </div>
+    <div class="field-row">
+      <label>Total records</label>
+      <input type="number" id="totalRecords" value="1000" min="1" max="100000" style="max-width:120px;" />
+      <span class="hint">max 100,000</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>LETTERS column <span class="badge">randomized</span></h3>
+    <div class="numbers-config">
+      <label class="chk-row" style="margin-top:0;"><input type="radio" name="lettersMode" value="alpha" checked /> Random A&ndash;Z</label>
+      <label class="chk-row"><input type="radio" name="lettersMode" value="custom" /> Custom alphabet:
+        <input type="text" id="customLetters" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" style="font-family:var(--font-mono);font-size:12px;flex:1;" /></label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>NUMBERS column <span class="badge">randomized</span></h3>
+    <div class="numbers-config">
+      <div class="grid2" style="margin-bottom:8px;">
+        <div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Count per record</div>
+          <input type="number" id="numCount" value="5" min="1" max="10" />
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Range (min &ndash; max)</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" id="numMin" value="1" min="1" max="999" style="width:70px;" />
+            <span style="color:var(--text-muted);">&ndash;</span>
+            <input type="number" id="numMax" value="80" min="1" max="999" style="width:70px;" />
+          </div>
+        </div>
+      </div>
+      <label class="chk-row"><input type="checkbox" id="zeroPad" checked /> Zero-pad (e.g. 04 not 4)</label>
+      <label class="chk-row"><input type="checkbox" id="uniqueNums" checked /> Unique numbers per record</label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Ticket preview</h3>
+    <div style="overflow-x:auto;">
+      <table class="preview-table">
+        <thead><tr><th>BARCODE</th><th>SYMBOL</th><th>LETTERS</th><th>NUMBERS</th></tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+    <div class="field-row" style="margin-top:14px;">
+      <label>Filename</label>
+      <input type="text" id="filename" value="MP0881" style="max-width:200px;" />
+      <span class="hint">.DBF added</span>
+    </div>
+    <button class="btn-generate" id="genBtn" onclick="doGenerate()"><i class="ti ti-cpu" aria-hidden="true"></i> Build ticket DBF</button>
+    <div class="download-box" id="downloadBox">
+      <i class="ti ti-circle-check" style="font-size:20px;color:var(--text-success);" aria-hidden="true"></i>
+      <div>
+        <div style="font-size:12px;color:var(--text-success);margin-bottom:2px;">Ready to download</div>
+        <a id="downloadLink" download="">Save your DBF file</a>
+        <div id="md5Line" style="font-size:11px;color:var(--text-secondary);margin-top:6px;font-family:var(--font-mono);word-break:break-all;display:none;align-items:center;gap:8px;">
+          <span id="md5Text"></span>
+          <button id="md5Copy" onclick="copyMd5('md5Text','md5Copy')" style="font-size:11px;padding:2px 8px;height:auto;border:0.5px solid var(--border);border-radius:4px;background:var(--surface-1);color:var(--text-secondary);cursor:pointer;font-family:var(--font-sans);flex-shrink:0;">Copy</button>
+        </div>
+      </div>
+    </div>
+    <p class="status" id="status"></p>
+  </div>
+
+  <div class="section">
+    <h3>2 &middot; Winning file <span class="badge">PRN_CODE &middot; PRICE</span></h3>
+    <label class="chk-row" style="margin-top:0;margin-bottom:10px;"><input type="checkbox" id="linkPool" checked onchange="togglePool()" /> Use the ticket batch above as the pool</label>
+    <div id="poolFields" style="display:none;">
+      <div class="field-row">
+        <label>Prefix</label><input type="text" id="wPrefix" value="0881" style="max-width:100px;" />
+        <label style="min-width:auto;">Start</label><input type="text" id="wStart" value="1867" style="max-width:100px;" />
+        <label style="min-width:auto;">Count</label><input type="number" id="wTotal" value="1000" style="max-width:100px;" />
+        <label style="min-width:auto;">Pad</label><input type="number" id="wPad" value="7" min="0" max="14" style="max-width:70px;" />
+      </div>
+    </div>
+    <div class="field-row">
+      <label>Seed</label>
+      <input type="text" id="seed" value="" placeholder="blank = new every time" style="max-width:180px;" />
+      <span class="hint">same seed rebuilds the same file</span>
+    </div>
+    <div class="field-row">
+      <label>Ticket face value</label>
+      <input type="number" id="faceValue" value="100" min="0" style="max-width:100px;" />
+      <span class="hint">used for payout %</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Prize tiers</h3>
+    <div class="tier-head"><span>Prize</span><span>Winners</span><span>Pattern</span><span>Setting</span><span></span></div>
+    <div id="tierList"></div>
+    <button onclick="addTier()" style="font-size:12px;padding:6px 12px;margin-top:4px;height:auto;"><i class="ti ti-plus" aria-hidden="true"></i> Add tier</button>
+    <div class="numbers-config" style="margin-top:12px;">
+      <div style="font-size:11px;color:var(--text-muted);line-height:1.7;">
+        Prize accepts a fixed value (<span style="font-family:var(--font-mono)">80</span>), a range (<span style="font-family:var(--font-mono)">50-500</span>) or a pick-list (<span style="font-family:var(--font-mono)">50,100,250</span>).
+      </div>
+      <div class="field-row" style="margin:8px 0 0;">
+        <label style="min-width:90px;">Round range to</label>
+        <input type="number" id="roundStep" value="10" min="0" style="max-width:80px;" />
+        <label style="min-width:auto;">Min gap</label>
+        <input type="number" id="minGap" value="0" min="0" style="max-width:80px;" />
+        <span class="hint">tickets between winners</span>
+      </div>
+      <label class="chk-row"><input type="checkbox" id="allowDup" /> Allow one ticket to win in more than one tier</label>
+      <label class="chk-row"><input type="checkbox" id="sortOut" checked /> Sort output by PRN_CODE</label>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Manual overrides</h3>
+    <textarea id="manualList" rows="3" placeholder="08810001847=1000&#10;08810001900=500" style="width:100%;font-family:var(--font-mono);font-size:12px;"></textarea>
+    <div class="mini">One per line: code=prize. These always win and beat the tiers.</div>
+  </div>
+
+  <div class="section">
+    <h3>Result</h3>
+    <div class="stat-grid">
+      <div class="stat"><div class="k">Winners</div><div class="v" id="sWin">&ndash;</div></div>
+      <div class="stat"><div class="k">Win rate</div><div class="v" id="sRate">&ndash;</div></div>
+      <div class="stat"><div class="k">Total payout</div><div class="v" id="sPay">&ndash;</div></div>
+      <div class="stat"><div class="k">Payout %</div><div class="v" id="sPct">&ndash;</div></div>
+    </div>
+    <div class="strip" id="strip"></div>
+    <div class="mini">Winner positions across the roll, first ticket on the left.</div>
+    <div style="overflow-x:auto;margin-top:12px;">
+      <table class="preview-table">
+        <thead><tr><th>PRN_CODE</th><th>PRICE</th><th>POSITION</th></tr></thead>
+        <tbody id="winBody"></tbody>
+      </table>
+    </div>
+    <div class="field-row" style="margin-top:14px;">
+      <label>Filename</label>
+      <input type="text" id="winFilename" value="ADE0881" style="max-width:200px;" />
+      <span class="hint">.DBF added</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-generate" id="drawBtn" onclick="doDraw()"><i class="ti ti-dice-5" aria-hidden="true"></i> Draw winners</button>
+      <button class="btn-generate" id="winBtn" onclick="doWinFile()" disabled><i class="ti ti-file-download" aria-hidden="true"></i> Build winning DBF</button>
+    </div>
+    <div class="download-box" id="winBox">
+      <i class="ti ti-circle-check" style="font-size:20px;color:var(--text-success);" aria-hidden="true"></i>
+      <div>
+        <div style="font-size:12px;color:var(--text-success);margin-bottom:2px;">Ready to download</div>
+        <a id="winLink" download="">Save your winning file</a>
+        <span style="color:var(--text-muted);margin:0 6px;">&middot;</span>
+        <a id="csvLink" download="" style="color:var(--text-success);">CSV copy</a>
+        <div id="wMd5Line" style="font-size:11px;color:var(--text-secondary);margin-top:6px;font-family:var(--font-mono);word-break:break-all;display:none;align-items:center;gap:8px;">
+          <span id="wMd5Text"></span>
+          <button onclick="copyMd5('wMd5Text','wMd5Copy')" id="wMd5Copy" style="font-size:11px;padding:2px 8px;height:auto;border:0.5px solid var(--border);border-radius:4px;background:var(--surface-1);color:var(--text-secondary);cursor:pointer;font-family:var(--font-sans);flex-shrink:0;">Copy</button>
+        </div>
+      </div>
+    </div>
+    <p class="status" id="winStatus"></p>
+  </div>
+</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TIER_COLORS = ['#7F77DD','#1D9E75','#D85A30','#378ADD','#BA7517','#D4537E','#639922','#E24B4A'];
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeRng(seed){ if(!seed) return Math.random; let h=2166136261; for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619);} return mulberry32(h>>>0); }
+
+function poolCfg(){
+  if($('linkPool').checked) return { prefix:$('prefix').value.trim(), start:parseInt($('startId').value)||0, total:Math.min(parseInt($('totalRecords').value)||1000,100000), pad:parseInt($('padTo').value)||0 };
+  return { prefix:$('wPrefix').value.trim(), start:parseInt($('wStart').value)||0, total:Math.min(parseInt($('wTotal').value)||1000,100000), pad:parseInt($('wPad').value)||0 };
+}
+function codeOf(cfg,seq){ const n=String(seq); return cfg.prefix + (cfg.pad>0 ? n.padStart(cfg.pad,'0') : n); }
+function togglePool(){ $('poolFields').style.display = $('linkPool').checked ? 'none':'block'; }
+
+function getAlphabet(){ const m=document.querySelector('input[name="lettersMode"]:checked').value; if(m==='custom'){const v=$('customLetters').value.trim(); return v.length?v:'ABCDEFGHIJKLMNOPQRSTUVWXYZ';} return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; }
+function randNumbers(count,min,max,zeroPad,unique){ const nums=[],used=new Set(); let tries=0; while(nums.length<count && tries<20000){ const n=Math.floor(Math.random()*(max-min+1))+min; if(!unique||!used.has(n)){ used.add(n); const d=String(max).length; nums.push(zeroPad?String(n).padStart(d,'0'):String(n)); } tries++; } return nums.join(','); }
+function makeRecord(seq){
+  const cfg={prefix:$('prefix').value.trim(),pad:parseInt($('padTo').value)||0};
+  const ab=getAlphabet();
+  return { BARCODE: codeOf(cfg,seq), SYMBOL:'', LETTERS: ab[Math.floor(Math.random()*ab.length)],
+    NUMBERS: randNumbers(parseInt($('numCount').value)||5, parseInt($('numMin').value)||1, parseInt($('numMax').value)||80, $('zeroPad').checked, $('uniqueNums').checked) };
+}
+function updatePreview(){
+  const start=parseInt($('startId').value)||0, tb=$('previewBody'); tb.innerHTML='';
+  for(let i=0;i<5;i++){ const r=makeRecord(start+i); const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+r.BARCODE+'</td><td>'+r.SYMBOL+'</td><td>'+r.LETTERS+'</td><td>'+r.NUMBERS+'</td>'; tb.appendChild(tr); }
+  $('downloadBox').style.display='none';
+}
+['startId','prefix','padTo','totalRecords','numCount','numMin','numMax','zeroPad','uniqueNums','customLetters'].forEach(id=>{const el=$(id); if(el) el.addEventListener('input',updatePreview);});
+document.querySelectorAll('input[name="lettersMode"]').forEach(r=>r.addEventListener('change',updatePreview));
+
+const PATTERNS=[['random','Random scatter'],['spread','Spread evenly'],['nth','Every Nth ticket'],['block','Block from code'],['ends','Code ends with'],['manual','Manual codes']];
+function tierRow(prize,count,pattern,param){
+  const d=document.createElement('div'); d.className='tier-row';
+  d.innerHTML='<input type="text" class="t-prize" value="'+prize+'" /><input type="number" class="t-count" value="'+count+'" min="0" />'+
+    '<select class="t-pattern">'+PATTERNS.map(p=>'<option value="'+p[0]+'"'+(p[0]===pattern?' selected':'')+'>'+p[1]+'</option>').join('')+'</select>'+
+    '<input type="text" class="t-param" value="'+param+'" placeholder="-" />'+
+    '<button class="icon-btn" aria-label="Remove tier"><i class="ti ti-trash" aria-hidden="true"></i></button>';
+  d.querySelector('.icon-btn').onclick=()=>{d.remove();};
+  d.querySelector('.t-pattern').onchange=e=>{ const p=d.querySelector('.t-param'); p.placeholder={random:'-',spread:'-',nth:'N e.g. 25',block:'start code',ends:'digits e.g. 7',manual:'code,code'}[e.target.value]; };
+  $('tierList').appendChild(d); return d;
+}
+function addTier(){ tierRow('100',5,'random',''); }
+function readTiers(){
+  return [...document.querySelectorAll('.tier-row')].map(r=>({
+    prize:r.querySelector('.t-prize').value.trim(), count:parseInt(r.querySelector('.t-count').value)||0,
+    pattern:r.querySelector('.t-pattern').value, param:r.querySelector('.t-param').value.trim() })).filter(t=>t.count>0&&t.prize);
+}
+function prizeValue(spec,rng,step){
+  if(/^\d+\s*-\s*\d+$/.test(spec)){ const p=spec.split('-').map(x=>parseInt(x)); let v=p[0]+rng()*(p[1]-p[0]); if(step>0) v=Math.round(v/step)*step; return String(Math.round(v)); }
+  if(spec.includes(',')){ const l=spec.split(',').map(x=>x.trim()).filter(Boolean); return l[Math.floor(rng()*l.length)]; }
+  return spec;
+}
+function pickIdx(tier,taken,cfg,allowDup,minGap,rng){
+  const T=cfg.total, res=[], free=i=>i>=0&&i<T&&(allowDup||!taken.has(i));
+  const take=i=>{res.push(i);taken.add(i);};
+  if(tier.pattern==='random'){ let tries=0,cap=T*60; while(res.length<tier.count&&tries<cap){ tries++; const i=Math.floor(rng()*T); if(!free(i))continue; if(minGap>0&&res.some(j=>Math.abs(j-i)<minGap))continue; take(i);} }
+  else if(tier.pattern==='spread'){ const step=T/tier.count; for(let k=0;k<tier.count;k++){ let i=Math.floor(k*step+rng()*step); let g=0; while(!free(i)&&g<T){i=(i+1)%T;g++;} if(free(i))take(i);} }
+  else if(tier.pattern==='nth'){ const n=Math.max(1,parseInt(tier.param)||10); for(let i=n-1;i<T&&res.length<tier.count;i+=n){ if(free(i))take(i);} }
+  else if(tier.pattern==='block'){ let s=0; if(tier.param){ const raw=tier.param.replace(cfg.prefix,''); const v=parseInt(raw,10); if(!isNaN(v)) s=v-cfg.start; } if(s<0)s=0; for(let i=s;i<T&&res.length<tier.count;i++){ if(free(i))take(i);} }
+  else if(tier.pattern==='ends'){ const suf=tier.param||'7'; for(let i=0;i<T&&res.length<tier.count;i++){ if(codeOf(cfg,cfg.start+i).endsWith(suf)&&free(i))take(i);} }
+  else if(tier.pattern==='manual'){ tier.param.split(/[\s,;]+/).filter(Boolean).forEach(c=>{ let i=parseInt(c.replace(cfg.prefix,''),10)-cfg.start; if(isNaN(i))return; if(free(i))take(i); }); }
+  return res;
+}
+
+let winners=[], lastCfg=null;
+function doDraw(){
+  const cfg=poolCfg(); lastCfg=cfg;
+  const tiers=readTiers(), rng=makeRng($('seed').value.trim());
+  const step=parseInt($('roundStep').value)||0, gap=parseInt($('minGap').value)||0, dup=$('allowDup').checked;
+  const taken=new Set(); winners=[];
+  tiers.forEach((t,ti)=>{ pickIdx(t,taken,cfg,dup,gap,rng).forEach(i=>winners.push({i,code:codeOf(cfg,cfg.start+i),price:prizeValue(t.prize,rng,step),tier:ti})); });
+  $('manualList').value.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line=>{
+    const p=line.split(/[=,:\t]/).map(x=>x.trim()); if(p.length<2)return;
+    const code=p[0], price=p[1]; let i=parseInt(code.replace(cfg.prefix,''),10)-cfg.start;
+    const ex=winners.find(w=>w.code===code); if(ex){ex.price=price;return;}
+    winners.push({i:isNaN(i)?-1:i,code,price,tier:-1});
+  });
+  if($('sortOut').checked) winners.sort((a,b)=>a.code.localeCompare(b.code));
+  const pay=winners.reduce((s,w)=>s+(parseFloat(w.price)||0),0);
+  const face=(parseFloat($('faceValue').value)||0)*cfg.total;
+  $('sWin').textContent=winners.length.toLocaleString();
+  $('sRate').textContent=(winners.length/cfg.total*100).toFixed(1)+'%';
+  $('sPay').textContent=Math.round(pay).toLocaleString();
+  $('sPct').textContent=face>0?(pay/face*100).toFixed(1)+'%':'-';
+  const strip=$('strip'); strip.innerHTML='';
+  winners.forEach(w=>{ if(w.i<0)return; const b=document.createElement('i'); b.style.left=(w.i/cfg.total*100)+'%'; b.style.background=w.tier<0?'#E24B4A':TIER_COLORS[w.tier%TIER_COLORS.length]; strip.appendChild(b); });
+  const tb=$('winBody'); tb.innerHTML='';
+  winners.slice(0,12).forEach(w=>{ const tr=document.createElement('tr'); tr.innerHTML='<td>'+w.code+'</td><td>'+w.price+'</td><td>'+(w.i<0?'manual':'#'+(w.i+1))+'</td>'; tb.appendChild(tr); });
+  $('winBtn').disabled=winners.length===0;
+  $('winBox').style.display='none';
+  $('winStatus').textContent=winners.length?winners.length+' winners drawn from '+cfg.total.toLocaleString()+' tickets.':'No winners. Check your tier counts.';
+}
+
+function u32le(n){return[n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF,(n>>24)&0xFF];}
+function u16le(n){return[n&0xFF,(n>>8)&0xFF];}
+function strBytes(s,len){const o=new Array(len).fill(0); for(let i=0;i<len&&i<s.length;i++)o[i]=s.charCodeAt(i)&0xFF; return o;}
+function buildDBF(fields,rows){
+  const hdrSize=32+fields.length*32+1, recSize=1+fields.reduce((s,f)=>s+f.length,0), buf=[];
+  buf.push(0x03); const d=new Date(); buf.push(d.getFullYear()-1900,d.getMonth()+1,d.getDate());
+  buf.push(...u32le(rows.length)); buf.push(...u16le(hdrSize)); buf.push(...u16le(recSize));
+  for(let i=0;i<20;i++)buf.push(0);
+  fields.forEach(f=>{ buf.push(...strBytes(f.name,11)); buf.push(f.type.charCodeAt(0)); for(let i=0;i<4;i++)buf.push(0); buf.push(f.length,0); for(let i=0;i<14;i++)buf.push(0); });
+  buf.push(0x0D);
+  rows.forEach(rec=>{ buf.push(0x20); fields.forEach(f=>{ const s=String(rec[f.name]||'').substring(0,f.length).padEnd(f.length,' '); buf.push(...strBytes(s,f.length)); }); });
+  buf.push(0x1A); return new Uint8Array(buf);
+}
+function md5(bytes){
+  function rol(x,c){return(x<<c)|(x>>>(32-c));} function add(a,b){return(a+b)&0xFFFFFFFF;}
+  const S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  const K=[]; for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296)&0xFFFFFFFF;
+  const oL=bytes.length,bL=oL*8; let p=oL+1; while(p%64!==56)p++;
+  const m=new Uint8Array(p+8); m.set(bytes); m[oL]=0x80; for(let i=0;i<8;i++)m[p+i]=(bL/Math.pow(2,8*i))&0xFF;
+  let a0=0x67452301,b0=0xEFCDAB89,c0=0x98BADCFE,d0=0x10325476;
+  for(let off=0;off<m.length;off+=64){ const M=new Array(16);
+    for(let i=0;i<16;i++)M[i]=m[off+i*4]|(m[off+i*4+1]<<8)|(m[off+i*4+2]<<16)|(m[off+i*4+3]<<24);
+    let A=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){ let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i;} else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16;} else if(i<48){F=B^C^D;g=(3*i+5)%16;} else {F=C^(B|~D);g=(7*i)%16;}
+      F=add(add(add(F,A),K[i]),M[g]); A=D;D=C;C=B; B=add(B,rol(F,S[i])); }
+    a0=add(a0,A);b0=add(b0,B);c0=add(c0,C);d0=add(d0,D); }
+  function hex(n){let s='';for(let i=0;i<4;i++){s+=((n>>>(i*8))&0xFF).toString(16).padStart(2,'0');}return s;}
+  return hex(a0)+hex(b0)+hex(c0)+hex(d0);
+}
+function b64(bytes){let s='';for(let i=0;i<bytes.length;i++)s+=String.fromCharCode(bytes[i]);return btoa(s);}
+function copyMd5(txtId,btnId){
+  const t=$(txtId).textContent.replace('MD5: ',''), b=$(btnId);
+  const done=()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>fb(t,done));}else fb(t,done);
+  function fb(x,cb){const a=document.createElement('textarea');a.value=x;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy');cb();}catch(e){}document.body.removeChild(a);}
+}
+function doGenerate(){
+  const btn=$('genBtn'),st=$('status'),box=$('downloadBox');
+  const total=Math.min(parseInt($('totalRecords').value)||1000,100000), start=parseInt($('startId').value)||0;
+  const fname=($('filename').value.trim()||'MP0881')+'.DBF';
+  btn.disabled=true; box.style.display='none'; st.textContent='Generating '+total.toLocaleString()+' records...';
+  setTimeout(()=>{ try{
+    const rows=[]; for(let i=0;i<total;i++)rows.push(makeRecord(start+i));
+    const bytes=buildDBF([{name:'BARCODE',type:'C',length:14},{name:'SYMBOL',type:'C',length:7},{name:'LETTERS',type:'C',length:7},{name:'NUMBERS',type:'C',length:35}],rows);
+    const l=$('downloadLink'); l.href='data:application/octet-stream;base64,'+b64(bytes); l.download=fname;
+    l.textContent='Save '+fname+' ('+(bytes.length/1024).toFixed(1)+' KB)';
+    $('md5Text').textContent='MD5: '+md5(bytes); $('md5Line').style.display='flex'; box.style.display='flex';
+    st.textContent=total.toLocaleString()+' records ready.';
+  }catch(e){st.textContent='Error: '+e.message;} btn.disabled=false; },50);
+}
+function doWinFile(){
+  if(!winners.length){$('winStatus').textContent='Draw winners first.';return;}
+  const fname=($('winFilename').value.trim()||'ADE0881')+'.DBF';
+  try{
+    const rows=winners.map(w=>({PRN_CODE:w.code,PRICE:String(w.price)}));
+    const bytes=buildDBF([{name:'PRN_CODE',type:'C',length:11},{name:'PRICE',type:'C',length:19}],rows);
+    const l=$('winLink'); l.href='data:application/octet-stream;base64,'+b64(bytes); l.download=fname;
+    l.textContent='Save '+fname+' ('+(bytes.length/1024).toFixed(1)+' KB)';
+    const csv='PRN_CODE,PRICE\n'+rows.map(r=>r.PRN_CODE+','+r.PRICE).join('\n');
+    const c=$('csvLink'); c.href='data:text/csv;base64,'+btoa(csv); c.download=fname.replace('.DBF','.csv');
+    $('wMd5Text').textContent='MD5: '+md5(bytes); $('wMd5Line').style.display='flex';
+    $('winBox').style.display='flex'; $('winStatus').textContent=rows.length+' winning records written.';
+  }catch(e){$('winStatus').textContent='Error: '+e.message;}
+}
+tierRow('1000',1,'spread','');
+tierRow('500',4,'random','');
+tierRow('80',45,'random','');
+updatePreview();
+</script>
+</body>
+</html>

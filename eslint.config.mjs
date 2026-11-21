@@ -86,6 +86,7 @@ export default tseslint.config(
           'expectBrandListed', 'expectBrandNotListed', 'expectBrandRow', 'submitBrandAndExpectRejected',
           'expectBrandPageStage', 'createApprovedBrand', 'expectBrandOfferedForDraw', 'sortBrandsAndVerify', 'expectSortReverses', 'expectAllRowsHave',
           'verifyViewLoaded', 'verifyStep1Loaded', 'editBrand', 'deleteBrand', 'review', 'approve',
+          'expectDrawInTab', 'expectDrawNotInTab', 'reviewDrawAndVerify', 'approveDrawAndVerify', 'waitForDrawInTab', 'waitForTicketsLoaded',
           'verifyPageLoaded', 'verifyLotteryTypeData', 'verifyFieldsVisible', 'verifyLoginSuccess',
           'verifyLoginError', 'verifyStillOnLoginPage', 'verifyErrorToast', 'verifyNetworkErrorToast',
         ],

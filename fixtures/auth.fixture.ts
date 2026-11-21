@@ -8,6 +8,8 @@ import { LotteryBrandListPage } from '../pages/lottery-brand/lottery-brand-list.
 import { AddBrandWizardPage } from '../pages/lottery-brand/add-brand-wizard.page';
 import { LotteryBrandDetailPage } from '../pages/lottery-brand/lottery-brand-detail.page';
 import { CreateDrawPage } from '../pages/draw/create-draw.page';
+import { LotteryDrawListPage } from '../pages/draw/lottery-draw-list.page';
+import { LotteryDrawDetailPage } from '../pages/draw/lottery-draw-detail.page';
 import { Logger } from '../utils/logger';
 import { STORAGE_STATE } from '../config/auth-paths';
 
@@ -41,6 +43,10 @@ type AuthFixtures = {
   lotteryBrandDetailPage: LotteryBrandDetailPage;
   /** Create Draw form - READ-ONLY, used to check which brands are offered for use. */
   createDrawPage: CreateDrawPage;
+  /** Lottery Draws list (/dashboard/draw): tabs, search, Review / Approve / Reject. */
+  lotteryDrawListPage: LotteryDrawListPage;
+  /** A draw's view page (edit-lottery-draw?drawId=). */
+  lotteryDrawDetailPage: LotteryDrawDetailPage;
   authenticatedPage: {
     page: Page;
     loginPage: LoginPage;
@@ -92,6 +98,14 @@ export const test = base.extend<AuthFixtures & AuthOptions>({
 
   createDrawPage: async ({ page }, use) => {
     await use(new CreateDrawPage(page));
+  },
+
+  lotteryDrawListPage: async ({ page }, use) => {
+    await use(new LotteryDrawListPage(page));
+  },
+
+  lotteryDrawDetailPage: async ({ page }, use) => {
+    await use(new LotteryDrawDetailPage(page));
   },
 
   authenticatedPage: async ({ loginPage, lotteryTypePage }, use) => {
