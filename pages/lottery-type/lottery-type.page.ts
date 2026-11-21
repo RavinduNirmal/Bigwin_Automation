@@ -239,6 +239,38 @@ export class LotteryTypePage extends BasePage {
     this.logger.info(`🗑️ Lottery type deleted: ${code}`);
   }
 
+  // ---------------------------------------------------------------- approval (maker-checker)
+
+  /** Edit -> "Review": moves an "Under Review" lottery type to "Pending Approval". */
+  async reviewLotteryType(code: string): Promise<void> {
+    const modal = await this.openEditModal(code);
+    await this.clickApprovalButton(modal.reviewButton, /\/api\/lottery\/types\/review\//, `Review of "${code}"`);
+    this.logger.info(`🔎 Lottery type reviewed: ${code}`);
+  }
+
+  /** Edit -> "Approve": moves a "Pending Approval" lottery type to "Approved". */
+  async approveLotteryType(code: string): Promise<void> {
+    const modal = await this.openEditModal(code);
+    await this.clickApprovalButton(modal.approveButton, /\/api\/lottery\/types\/approve\//, `Approval of "${code}"`);
+    this.logger.info(`✅ Lottery type approved: ${code}`);
+  }
+
+  private async clickApprovalButton(button: Locator, api: RegExp, what: string): Promise<void> {
+    await expect(button, `${what}: the button should be offered in the Update dialog`).toBeVisible();
+    const response = this.page.waitForResponse((res) => api.test(res.url()) && res.request().method() === 'PUT', { timeout: SERVER_SAVE_TIMEOUT });
+    const reloaded = this.page.waitForEvent('load', { timeout: SERVER_SAVE_TIMEOUT }).then(() => true, () => false);
+    await button.click();
+    const res = await response;
+    expect(res.status(), `${what} should succeed (HTTP ${res.status()})`).toBeLessThan(400);
+    expect(await reloaded, `${what}: the page should reload`).toBe(true);
+    await this.verifyPageLoaded();
+  }
+
+  /** The app's 404 page text ("Nothing here! The page requested does not exist."). */
+  notFoundMessage(): Locator {
+    return this.page.getByText(/Nothing here!/i);
+  }
+
   async openLogs(code: string): Promise<void> {
     await this.openRowMenu(code);
     await this.menuItem('Logs').click();
