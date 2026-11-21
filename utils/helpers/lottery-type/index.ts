@@ -7,4 +7,5 @@ export * from './search.helpers';
 export * from './table.helpers';
 export * from './sort.helpers';
 export * from './cleanup.helpers';
+export * from './approval.helpers';
 export * from '../common/toast.helpers';

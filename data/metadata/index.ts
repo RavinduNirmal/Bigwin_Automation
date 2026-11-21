@@ -5,6 +5,8 @@
  */
 import { TestMetadataManager } from '../../utils/metadata-manager';
 import { LoginMetadata } from './login.metadata';
+import { LotteryBrandMetadata } from './lottery-brand.metadata';
+import { LotteryTypeApprovalMetadata } from './lottery-type-approval.metadata';
 import { LotteryTypeCreateMetadata } from './lottery-type-create.metadata';
 import { LotteryTypeDeleteMetadata } from './lottery-type-delete.metadata';
 import { LotteryTypeEditMetadata } from './lottery-type-edit.metadata';
@@ -14,6 +16,8 @@ import { LotteryTypeTableMetadata } from './lottery-type-table.metadata';
 
 export const AllTestMetadata = {
   ...LoginMetadata,
+  ...LotteryBrandMetadata,
+  ...LotteryTypeApprovalMetadata,
   ...LotteryTypeCreateMetadata,
   ...LotteryTypeDeleteMetadata,
   ...LotteryTypeEditMetadata,
@@ -29,6 +33,8 @@ export function registerAllMetadata(): void {
 
 export {
   LoginMetadata,
+  LotteryBrandMetadata,
+  LotteryTypeApprovalMetadata,
   LotteryTypeCreateMetadata,
   LotteryTypeDeleteMetadata,
   LotteryTypeEditMetadata,

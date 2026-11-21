@@ -14,8 +14,13 @@ export const STATUS_LABEL: Record<LotteryTypeStatus, string> = {
   DISABLED: 'Disable',
 };
 
-/** Stage of a newly created / edited (not yet reviewed) lottery type. */
+/**
+ * Approval stages (maker-checker). Create / Edit -> "Under Review" -> Review -> "Pending Approval"
+ * -> Approve -> "Approved". Editing an Approved lottery type sends it back to "Under Review".
+ */
 export const STAGE_UNDER_REVIEW = 'Under Review';
+export const STAGE_PENDING_APPROVAL = 'Pending Approval';
+export const STAGE_APPROVED = 'Approved';
 
 export const MAX_FIELD_LENGTH = 255;
 
