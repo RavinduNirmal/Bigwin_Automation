@@ -1,0 +1,11 @@
+{
+  "baseURL": "",
+  "admin": {
+    "username": "",
+    "password": "",
+    "otp": ""
+  },
+  "apiBaseURL": "",
+  "timeout": 30000,
+  "retries": 2
+}

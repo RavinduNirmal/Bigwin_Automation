@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+
+    // Full strict type-checking (noImplicitAny, strictNullChecks, ...)
+    "strict": true,
+    // Check our code, not third-party .d.ts files (allure-playwright's types reference a
+    // package sub-path that "commonjs" resolution can't follow)
+    "skipLibCheck": true,
+    // Type-check only - Playwright transpiles the tests itself
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["tests/**/*.ts", "pages/**/*.ts", "components/**/*.ts", "fixtures/**/*.ts", "utils/**/*.ts", "data/**/*.ts", "config/**/*.ts", "playwright.config.ts"],
+  "exclude": ["node_modules", "playwright-report", "test-results", "allure-results", "allure-report"]
+}

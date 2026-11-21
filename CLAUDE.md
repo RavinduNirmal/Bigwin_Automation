@@ -1,0 +1,73 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+Playwright + TypeScript E2E test suite for the **BigWin admin portal** (lottery back office, Next.js + MUI), covering Login (password + OTP) and the **Lottery Type** module (sidebar Lottery → Lottery Type: create / edit / delete / search / table / navigation). There is no application code here — only tests, page objects and reporting glue. There is no build step; Playwright transpiles TS on the fly. (The framework was ported from an earlier Grabbit Vending suite; the original files are archived outside the repo in `../Bigwin_Automation_grabbit_backup_2026-11-20.tar.gz`.)
+
+## Commands
+
+```bash
+npm ci && npx playwright install --with-deps   # setup
+
+npx playwright test                            # all tests (setup + chromium)
+npx playwright test tests/e2e/lottery-type/lottery_type_create.spec.ts   # one file
+npx playwright test -g "TC-LT-CR-002"          # one test by its TC id
+npx playwright test lottery-type/ --headed --debug
+npm run test:login | test:lottery-type | test:lottery-type:<create|edit|delete|search|table|nav> | test:lottery-type:ci
+
+npm run allure:serve                           # view allure-results
+npm run test:allure -- <playwright args>       # run + fresh Allure report (ALLURE_NO_OPEN=1 to only generate)
+npm run test:network-rerun -- <playwright args> # run, then re-run ONLY tests that failed due to the network
+
+npm run check                                  # typecheck (tsc strict) + lint - run before committing
+npx playwright show-report                     # view playwright-report
+```
+
+`test:lottery-type` runs **headed**. Passing `--reporter=…` on the CLI replaces the configured reporters, so Allure results are only written if `allure-playwright` is included.
+
+Lint policy (`eslint.config.mjs`): **errors** are real bugs and must be fixed (un-awaited Playwright calls/assertions, floating promises, `test.only`, invalid `expect`); **warnings** are tracked debt (`waitForTimeout`, `networkidle`, conditionals in tests, `any`). `combinedTest` and `setup` are registered as test aliases, and helpers that assert internally are listed in `assertFunctionNames` - add new `expect…`/`…AndVerify` helpers there. Don't name a helper `expectX`-something that the plugin could mistake for `expect(...)` without listing it. Allure helpers (`TestHelper.initTest/attachText/step`, `AllureHelpers.*`) are async - always `await` them.
+
+## Configuration & environment
+
+- The root `playwright.config.ts` is the live config (an older commented-out version sits at its top; `config/playwright.config.ts` is a stale commented-out copy - ignore both).
+- `config/global-setup.ts` reads `config/env/${TEST_ENV}.json` (`dev` | `staging` | `prod`, **default `dev`**) and sets `BASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_OTP`. Only `dev.json` is filled in (BigWin dev: `https://e763fesnjnk.dev.accelr.net`); staging/prod are empty templates and global setup fails fast if `baseURL`/credentials are missing. `dotenv` is never loaded, so `.env` is not used.
+- **OTP:** BigWin login is email + password, then a 6-digit OTP in a "Verify OTP" dialog. The dev server has a bypass OTP (`123456`, in `dev.json`) - it actually accepts any 6 digits, so there is no "wrong OTP" test.
+- `fullyParallel: false` keeps tests within a file in order; files run in parallel on several workers (2 on CI). Retries 0 locally, 1 on CI. `actionTimeout` 120s; specs use `describe.configure({ timeout: 180000 })` (login 240000 - the login API can be slow).
+- Reporters: html, list, json (`test-results.json`), allure (`allure-results/`).
+- **Windows gotcha:** a run hangs silently at "clear output" if another Playwright process (e.g. a paused Playwright-MCP/agent session or the VS Code test server) still holds files in `test-results/`. Stop that process (or its paused test) and re-run.
+
+## Architecture
+
+Layering: **spec → fixture → page object / modal → component → utils**.
+
+- `pages/base.page.ts`: abstract `BasePage` (logger, `CustomWaits`, safe click/fill). `pages/lottery-type/lottery-type.page.ts` (`LotteryTypePage`) is the façade: it composes `components/` (Table, Search, Toast, Modal), lazily creates the Create/Edit modals, and owns high-level actions - `createLotteryType`, `editLotteryType`, `deleteLotteryType`, `openRowMenu`, `openLogs`, `searchLotteryTypes`, `selectTab`, `sortByColumn`, `getLotteryTypeData`, `verifyLotteryTypeData`. Specs call these, not raw locators.
+- **App behaviour baked into the page object:** successful Create/Update/Delete end with `window.location.reload()` and show **no toast** (only delete toasts "Lottery type deleted successfuly"), so actions wait for the page `load` event and the table; failures show react-hot-toast messages (`role="status"`, e.g. "Failed to create lottery type"). Delete has **no confirmation dialog** and is a hard delete. The list API returns every record on one page, so CRUD helpers find a record by its code in the unfiltered table.
+- `pages/auth/login.page.ts` + `otp.modal.ts`: `login(email, pw)` does step 1; `loginWithOtp(...)` does both. `OtpModal.submitOtp` accepts the native `alert("Successfully validated OTP")` and keeps its text in `lastAlertMessage`.
+- **Auth is a setup project.** `tests/auth.setup.ts` (project `setup`, which `chromium` depends on) logs in once per run with password + OTP and saves `storageState` to `playwright/.auth/admin.json` (git-ignored). BigWin keeps its session in **localStorage** (`accesstoken`, `tokenExpiry` ~8h, `userId`), which storageState captures, so no extra session handling is needed. `--no-deps` skips setup and reuses the last saved session.
+- `fixtures/auth.fixture.ts`: exports the `test`/`expect` specs use. `authenticatedPage` opens `/` with the saved session, fails fast on 401/403 or if the login form appears, clicks the real sidebar (Lottery → Lottery Type) and yields `{ page, loginPage, lotteryTypePage }`. Login-page tests opt out: `test.use({ restoreSession: false, storageState: { cookies: [], origins: [] } })`.
+- `fixtures/lottery-type-data.fixture.ts` → `data/factories/lottery-type-data.factory.ts`: `testLotteryTypeData` gives `unique(status)`, `withCode/withName`, `newCode/newName`, `invalid.*`, `security.*`, `edge.*`, `taggedSet(n)`. Every generated code starts with **`AT`**. Specs merge it with the auth fixture: `mergeTests(test, dataTest)` → `combinedTest`.
+- **Allure metadata is keyed by test ID.** Each spec calls `registerAllMetadata()` (`data/metadata/index.ts`); each test calls `await TestHelper.initTest('<TC-ID>', page)`, which throws if `data/metadata/*.metadata.ts` has no entry. New test → add a metadata entry with the same id; new metadata file → add it to `index.ts`. Use `TestHelper.step/attachText`, `AllureHelpers.attachScreenshot`, end with `TestHelper.success(...)`.
+- **Reusable helpers live in `utils/helpers/`**, never in specs. `utils/helpers/lottery-type/` is split by concern (`create`, `edit`, `delete`, `search`, `table`, `sort`, `cleanup`) and re-exported from `index.ts`; app-wide helpers (`TestHelper`, `Helpers`, toast helpers) are in `utils/helpers/common/`.
+- **Locators are user-facing** (`getByRole`/`getByText`) and live only in page objects/components. Documented exceptions: the Status MUI select (`[aria-haspopup="listbox"]`) and the Stage input (`input[name="approvalstatus"]`) in `lottery-type-form.fields.ts` because their labels aren't associated; the row-actions icon button has no name (`rowFor(code).getByRole('button').last()`); the OTP dialog has no accessible name (found by its "Verify OTP" text); `renderedMarkupIn(code)` is a CSS check that HTML is not rendered. Toasts use `getByRole('status', { includeHidden: true })` because an open dialog marks the page `aria-hidden`.
+- **Network rerun:** `fixtures/network-monitor.fixture.ts` is an auto fixture inside `auth.fixture`'s `test`. When a test finally fails AND there is network evidence (`net::ERR_*` other than ABORTED, 502/503/504, a request slower than `NETWORK_SLOW_MS` (20s) or stalled, network error in the message), it records the test in `playwright/.network-rerun/`. `scripts/run-with-network-rerun.js` re-runs only those after `NETWORK_RERUN_DELAY` (30s) with 1 worker (reports in `*-rerun<N>`), writes `network-rerun-summary.json`. Real failures keep exit code 1. Tests that cut the network on purpose need `{ tag: '@simulated-network' }`; `SIMULATE_NETWORK_FAILURE=<TC id>` forces API timeouts for a demo. Note the app polls notifications every 30s.
+- **Parallel-safe data rule:** workers share one live dev database (other people use it too), so never assert on "the first row", total counts or the whole table's contents. Assert on the test's OWN uniquely coded records (`expectLotteryTypeInTable/NotInTable`, `expectRowCountForCode`, `expectLotteryTypeSaved`) or on properties that hold regardless of other rows (sort order). Each test records submitted codes in `LotteryTypeCreateModal.submittedCodes` and `afterEach` calls `cleanupLotteryTypes`, which **only deletes codes starting with `AT`** - never submit a real code (e.g. `PASS`) other than through that guard. Never click "Review"/"Approve" (maker-checker workflow on shared data).
+- Test conventions: titles start with the TC id (`'TC-LT-CR-002: …'`; ids `TC-LOGIN-*`, `TC-LT-NAV/CR/ED/DEL/SRCH/TBL-*`). Specs use `describe.configure({ mode: 'default' })`.
+- A failing test is a result: if the app misbehaves, the test must fail with a clear message - never `fixme`/skip it or weaken the assertion. Known app defects the suite currently reports (12 failing tests as of 2026-11-21): Lottery Type search, sorting and the Active/Deleted tabs do nothing (the list API ignores query/sort/view); no tab is selected on load; Create ignores Status DISABLED (saved as ACTIVE; Edit saves it correctly); a Type of only spaces is accepted; changing a Code to an existing one fails silently (no error shown).
+
+## Current state of the codebase
+
+`utils/allure-helpers.ts`, `utils/custom-waits.ts`, `utils/logger.ts`, `utils/metadata-manager.ts` and `utils/helpers/common/*` are carried over from the previous suite and still contain large commented-out blocks - find the live code before editing; don't revive commented code. `tests/api`, `tests/performance`, `tests/security`, `tests/e2e/dashboard`, `tests/e2e/smoke` are empty placeholders.
+
+## AI test agents
+
+Playwright Test Agents (`playwright-test-planner`, `-generator`, `-healer`) drive the Playwright test MCP server (`npx playwright run-test-mcp-server`):
+- **Claude Code:** `.claude/agents/*.md` + `.mcp.json`. Each agent file ends with a **PROJECT RULES** section (BigWin conventions + never hide an app bug). Re-running `npx playwright init-agents` overwrites these files - re-append the rules.
+- **GitHub Copilot:** `.github/agents/*.agent.md` + `.vscode/mcp.json`.
+
+`tests/seed.spec.ts` uses `authenticatedPage`, so agents start logged in on Lottery Type. The planner writes plans to `specs/`; `.playwright-mcp/` holds session logs. A paused agent session keeps a worker alive - stop it before normal runs (see the Windows gotcha above).
+
+## CI
+
+`.github/workflows/playwright.yml` runs `npx playwright test` on push/PR to `main`/`master` and uploads `playwright-report/`. CI needs network access to the BigWin dev server.

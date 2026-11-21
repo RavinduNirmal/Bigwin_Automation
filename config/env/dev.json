@@ -1,0 +1,11 @@
+{
+  "baseURL": "https://e763fesnjnk.dev.accelr.net",
+  "admin": {
+    "username": "ravindu.n@cba.lk",
+    "password": "BlMFhqivPb",
+    "otp": "123456"
+  },
+  "apiBaseURL": "https://e763fesnjnk.dev.accelr.net/api",
+  "timeout": 30000,
+  "retries": 2
+}

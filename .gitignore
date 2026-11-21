@@ -1,0 +1,53 @@
+# ---------- Dependencies ----------
+node_modules/
+
+# ---------- Playwright output ----------
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+test-results.json
+
+# Saved login session from tests/auth.setup.ts - contains a LIVE auth token. Never commit.
+/playwright/.auth/
+
+# Playwright MCP session logs/snapshots
+.playwright-mcp/
+
+# ---------- Allure ----------
+allure-results/
+allure-report/
+/reports/
+
+# ---------- Secrets / local environment ----------
+# Real values live only on each machine (or in CI secrets). .env.example is the committed template.
+.env
+.env.*
+!.env.example
+
+# ---------- Editor ----------
+# Ignore personal VS Code settings, but share the team's MCP server config
+.vscode/*
+!.vscode/mcp.json
+!.vscode/extensions.json
+
+# ---------- Caches & logs ----------
+.eslintcache
+*.tsbuildinfo
+*.log
+npm-debug.log*
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+
+# ---------- Claude Code ----------
+# Shared: .claude/agents/ (Playwright agents) and .mcp.json. Personal settings stay local.
+.claude/settings.local.json
+
+# ---------- Network rerun (scripts/run-with-network-rerun.js) ----------
+/playwright/.network-rerun/
+/test-results-rerun*/
+/playwright-report-rerun*/
+test-results-rerun*.json
+network-rerun-summary.json

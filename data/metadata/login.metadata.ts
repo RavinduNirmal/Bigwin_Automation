@@ -1,0 +1,106 @@
+import { TestMetadataCollection } from '../../utils/metadata-manager';
+
+/** Allure metadata for tests/e2e/login/login.spec.ts (keyed by TC id). */
+const base = {
+  epic: 'Authentication',
+  owner: 'QA Team',
+} as const;
+
+export const LoginMetadata: TestMetadataCollection = {
+  'TC-LOGIN-001': {
+    ...base, feature: 'Login', story: 'Login Page UI', severity: 'critical', tags: ['Smoke', 'Regression', 'UI'],
+    tms: 'TC-LOGIN-001',
+    description: 'Login page shows heading, Email address, Password, Login button, Forgot password link and the info message',
+    preconditions: 'User is logged out',
+    steps: ['Open /auth/jwt/login', 'Verify all login controls are visible'],
+    expectedResult: 'All login controls are visible and enabled',
+  },
+  'TC-LOGIN-002': {
+    ...base, feature: 'Login', story: 'Successful Login', severity: 'blocker', tags: ['Smoke', 'Regression'],
+    tms: 'TC-LOGIN-002',
+    description: 'Valid email + password + OTP logs the admin in and opens the dashboard',
+    preconditions: 'User is logged out; valid admin account',
+    steps: ['Enter valid email and password', 'Click Login', 'Enter the OTP in "Verify OTP"', 'Submit'],
+    expectedResult: '"Successfully validated OTP" alert, dashboard (Home) with sidebar shown, token stored',
+  },
+  'TC-LOGIN-003': {
+    ...base, feature: 'Login', story: 'Invalid Credentials', severity: 'critical', tags: ['Regression', 'Negative'],
+    tms: 'TC-LOGIN-003',
+    description: 'Wrong password is rejected with "Invalid email or password."',
+    preconditions: 'User is logged out',
+    steps: ['Enter a valid email and a wrong password', 'Click Login'],
+    expectedResult: 'Error toast "Invalid email or password.", no OTP dialog, user stays on login page',
+  },
+  'TC-LOGIN-004': {
+    ...base, feature: 'Login', story: 'Invalid Credentials', severity: 'normal', tags: ['Regression', 'Negative'],
+    tms: 'TC-LOGIN-004',
+    description: 'Unregistered email is rejected',
+    preconditions: 'User is logged out',
+    steps: ['Enter an unregistered email and any password', 'Click Login'],
+    expectedResult: 'Error toast naming the unknown email, user stays on login page',
+  },
+  'TC-LOGIN-005': {
+    ...base, feature: 'Login', story: 'Field Validation', severity: 'normal', tags: ['Regression', 'Validation'],
+    tms: 'TC-LOGIN-005',
+    description: 'Submitting an empty form shows "Email is required" and "Password is required"',
+    preconditions: 'User is logged out',
+    steps: ['Leave both fields empty', 'Click Login'],
+    expectedResult: 'Both required messages shown, no request sent',
+  },
+  'TC-LOGIN-006': {
+    ...base, feature: 'Login', story: 'Field Validation', severity: 'normal', tags: ['Regression', 'Validation'],
+    tms: 'TC-LOGIN-006',
+    description: 'Malformed email shows "Must be a valid email"',
+    preconditions: 'User is logged out',
+    steps: ['Enter "not-an-email" and a password', 'Click Login'],
+    expectedResult: '"Must be a valid email" shown, user stays on login page',
+  },
+  'TC-LOGIN-007': {
+    ...base, feature: 'Login', story: 'Security', severity: 'normal', tags: ['Regression', 'Security'],
+    tms: 'TC-LOGIN-007',
+    description: 'Password input is masked',
+    preconditions: 'User is logged out',
+    steps: ['Type a password'],
+    expectedResult: 'Password field has type="password"',
+  },
+  'TC-LOGIN-008': {
+    ...base, feature: 'OTP Verification', story: 'OTP Validation', severity: 'normal', tags: ['Regression', 'Validation'],
+    tms: 'TC-LOGIN-008',
+    description: 'OTP dialog requires a 6-digit OTP',
+    preconditions: 'Valid email + password submitted',
+    steps: ['Submit an empty OTP', 'Submit "12a"'],
+    expectedResult: '"OTP is required" then "OTP must be 6 digits"; user is not logged in',
+  },
+  'TC-LOGIN-009': {
+    ...base, feature: 'OTP Verification', story: 'Cancel OTP', severity: 'minor', tags: ['Regression'],
+    tms: 'TC-LOGIN-009',
+    description: 'Cancelling the OTP dialog keeps the user logged out on the login page',
+    preconditions: 'Valid email + password submitted',
+    steps: ['Click Cancel in "Verify OTP"'],
+    expectedResult: 'Dialog closes, URL stays /auth/jwt/login, no token stored',
+  },
+  'TC-LOGIN-010': {
+    ...base, feature: 'Forgot Password', story: 'Forgot Password Dialog', severity: 'minor', tags: ['Regression', 'UI'],
+    tms: 'TC-LOGIN-010',
+    description: '"Forgot password" opens the Forgot Password dialog; Cancel closes it',
+    preconditions: 'User is logged out',
+    steps: ['Click "Forgot password"', 'Verify Email field and "Send Code to Mobile"', 'Click Cancel'],
+    expectedResult: 'Dialog shows the email field and send button, closes on Cancel (no code is sent)',
+  },
+  'TC-LOGIN-011': {
+    ...base, feature: 'Access Control', story: 'Protected Pages', severity: 'critical', tags: ['Regression', 'Security'],
+    tms: 'TC-LOGIN-011',
+    description: 'A logged-out user opening a dashboard page is sent to the login page',
+    preconditions: 'User is logged out',
+    steps: ['Open /dashboard/lottery/lottery-type directly'],
+    expectedResult: 'Login page shown; Lottery Type data not shown',
+  },
+  'TC-LOGIN-012': {
+    ...base, feature: 'Access Control', story: 'Session Reuse', severity: 'normal', tags: ['Regression'],
+    tms: 'TC-LOGIN-012',
+    description: 'A logged-in user opening the login page is redirected to the dashboard',
+    preconditions: 'Saved admin session',
+    steps: ['Open /auth/jwt/login with a valid session'],
+    expectedResult: 'User lands on the dashboard instead of the login form',
+  },
+};
