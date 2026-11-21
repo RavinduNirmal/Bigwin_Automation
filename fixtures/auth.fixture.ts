@@ -3,6 +3,11 @@ import { test as base } from './network-monitor.fixture'; // adds the automatic 
 import * as fs from 'fs';
 import { LoginPage } from '../pages/auth/login.page';
 import { LotteryTypePage } from '../pages/lottery-type/lottery-type.page';
+import { LotteryBrandFormPage } from '../pages/lottery-brand/lottery-brand-form.page';
+import { LotteryBrandListPage } from '../pages/lottery-brand/lottery-brand-list.page';
+import { AddBrandWizardPage } from '../pages/lottery-brand/add-brand-wizard.page';
+import { LotteryBrandDetailPage } from '../pages/lottery-brand/lottery-brand-detail.page';
+import { CreateDrawPage } from '../pages/draw/create-draw.page';
 import { Logger } from '../utils/logger';
 import { STORAGE_STATE } from '../config/auth-paths';
 
@@ -26,6 +31,16 @@ type AuthOptions = {
 type AuthFixtures = {
   loginPage: LoginPage;
   lotteryTypePage: LotteryTypePage;
+  /** Lottery Brand "Add New Brand" form - read-only, used to check which lottery types are offered for use. */
+  lotteryBrandFormPage: LotteryBrandFormPage;
+  /** Lottery Brands list (/dashboard/lottery). */
+  lotteryBrandListPage: LotteryBrandListPage;
+  /** "Add New Brand" 4-step wizard. */
+  addBrandWizardPage: AddBrandWizardPage;
+  /** A brand's own page (view / edit / Review / Approve / Operation logs). */
+  lotteryBrandDetailPage: LotteryBrandDetailPage;
+  /** Create Draw form - READ-ONLY, used to check which brands are offered for use. */
+  createDrawPage: CreateDrawPage;
   authenticatedPage: {
     page: Page;
     loginPage: LoginPage;
@@ -57,6 +72,26 @@ export const test = base.extend<AuthFixtures & AuthOptions>({
 
   lotteryTypePage: async ({ page }, use) => {
     await use(new LotteryTypePage(page));
+  },
+
+  lotteryBrandFormPage: async ({ page }, use) => {
+    await use(new LotteryBrandFormPage(page));
+  },
+
+  lotteryBrandListPage: async ({ page }, use) => {
+    await use(new LotteryBrandListPage(page));
+  },
+
+  addBrandWizardPage: async ({ page }, use) => {
+    await use(new AddBrandWizardPage(page));
+  },
+
+  lotteryBrandDetailPage: async ({ page }, use) => {
+    await use(new LotteryBrandDetailPage(page));
+  },
+
+  createDrawPage: async ({ page }, use) => {
+    await use(new CreateDrawPage(page));
   },
 
   authenticatedPage: async ({ loginPage, lotteryTypePage }, use) => {
