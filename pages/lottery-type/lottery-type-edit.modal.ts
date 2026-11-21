@@ -7,8 +7,12 @@ import { LotteryTypeData, LotteryTypeStatus } from '../../data/factories/lottery
 /**
  * "Update Lottery Type" dialog (row actions menu -> Edit).
  * Fields: Code *, Type *, Status, Stage (read-only, e.g. "Under Review").
- * Buttons: Review (maker-checker workflow - NOT used by the tests), Cancel, Update.
- * On success the dialog closes and the page reloads (no toast).
+ * Buttons depend on the approval stage (maker-checker workflow):
+ *   Under Review     -> Review, Cancel, Update
+ *   Pending Approval -> Approve, Cancel, Update
+ *   Approved         -> Cancel, Update
+ * Review / Approve / Update each end with a page reload (no toast that survives it).
+ * Only ever review/approve the tests' OWN "AT..." records (shared dev database).
  */
 export class LotteryTypeEditModal extends BaseModal {
   readonly codeInput: Locator;
@@ -18,6 +22,7 @@ export class LotteryTypeEditModal extends BaseModal {
   readonly updateButton: Locator;
   readonly cancelButton: Locator;
   readonly reviewButton: Locator;
+  readonly approveButton: Locator;
   readonly title: Locator;
 
   constructor(page: Page) {
@@ -30,6 +35,7 @@ export class LotteryTypeEditModal extends BaseModal {
     this.updateButton = this.modal.getByRole('button', { name: 'Update', exact: true });
     this.cancelButton = this.modal.getByRole('button', { name: 'Cancel', exact: true });
     this.reviewButton = this.modal.getByRole('button', { name: 'Review', exact: true });
+    this.approveButton = this.modal.getByRole('button', { name: 'Approve', exact: true });
     this.title = this.modal.getByRole('heading', { name: 'Update Lottery Type' });
   }
 
