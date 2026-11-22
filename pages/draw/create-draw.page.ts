@@ -1,4 +1,4 @@
-import { Page, Locator, Response, expect } from '@playwright/test';
+import { Page, Locator, Response, Dialog, expect } from '@playwright/test';
 import { BasePage } from '../base.page';
 import { LotteryDrawData } from '../../data/factories/lottery-draw-data.factory';
 import { SERVER_SAVE_TIMEOUT } from '../../config/timeouts';
@@ -73,6 +73,74 @@ export class CreateDrawPage extends BasePage {
     return this.page.getByRole('paragraph').filter({ hasText: `${label}:` });
   }
 
+  /** Stepper label "Details" (Step 1) / "Upload" (Step 2). */
+  stepLabel(name: 'Details' | 'Upload'): Locator {
+    return this.page.getByText(new RegExp(name)).first();
+  }
+
+  /** An inline validation message under a Step 1 field, e.g. "Draw Number must be a positive number". */
+  fieldError(text: string | RegExp): Locator {
+    return this.page.getByText(text).first();
+  }
+
+  /**
+   * Click Next and DISMISS the native confirm if one appears, so nothing advances or is created.
+   * Returns the confirm text, or null when validation blocked Next before any confirm.
+   */
+  async clickNextAndDismiss(waitMs = 3000): Promise<string | null> {
+    let message: string | null = null;
+    const handler = (d: Dialog) => { message = d.message(); void d.dismiss(); };
+    this.page.on('dialog', handler);
+    try {
+      await this.nextButton.click();
+      // give the app time to validate or to raise its confirm
+      try {
+        await expect.poll(() => message, { timeout: waitMs }).not.toBeNull();
+      } catch {
+        // no confirm within waitMs: validation blocked Next
+      }
+    } finally {
+      this.page.off('dialog', handler);
+    }
+    this.lastConfirmMessage = message ?? '';
+    this.logger.info(`⏭️ Next: ${message ? `confirm "${message}" (dismissed)` : 'no confirm (blocked)'}`);
+    return message;
+  }
+
+  /**
+   * Click Next, ACCEPT any native confirm and report what happened: the confirm texts and whether Step 2
+   * opened. Accepting only moves to Step 2 - nothing is created before "Create Draw".
+   */
+  async attemptNext(waitMs = 4000): Promise<{ confirms: string[]; onStep2: boolean }> {
+    const confirms: string[] = [];
+    const handler = (d: Dialog) => { confirms.push(d.message()); void d.accept(); };
+    this.page.on('dialog', handler);
+    try {
+      await this.nextButton.click();
+      const onStep2 = await this.uploadHeading.waitFor({ state: 'visible', timeout: waitMs }).then(() => true, () => false);
+      this.logger.info(`⏭️ Next: ${onStep2 ? 'Step 2 opened' : 'stayed on Step 1'}${confirms.length ? ` (confirm "${confirms[0]}")` : ''}`);
+      return { confirms, onStep2 };
+    } finally {
+      this.page.off('dialog', handler);
+    }
+  }
+
+  // ---- "Upload Files" dialog (Create Draw Step 2 "Select File" and the list's "Add Tickets")
+
+  uploadDialogButton(name: 'Add' | 'Cancel'): Locator { return this.uploadDialog().getByRole('button', { name, exact: true }); }
+  browseFilesButton(): Locator { return this.uploadDialog().getByText('Browse files'); }
+  /** Optional MD5 box of the dialog (Add Tickets). */
+  uploadDialogMd5(): Locator { return this.uploadDialog().getByRole('textbox', { name: /MD5/ }); }
+
+  /** Choose a file in the open "Upload Files" dialog (hidden file input - documented exception). Does not press Add. */
+  async chooseUploadFile(filePath: string): Promise<void> {
+    await expect(this.uploadDialog(), '"Upload Files" dialog should be open').toBeVisible();
+    await this.page.locator('input[type="file"]').setInputFiles(filePath);
+  }
+
+  /** "Upload Files" dialog content check that only .dbf files are allowed (toast or helper text). */
+  dbfOnlyMessage(): Locator { return this.page.getByText(/only.*\.?dbf|\.dbf.*only|invalid file|not a dbf/i).first(); }
+
   uploadDialog(): Locator {
     return this.page.getByRole('dialog').filter({ hasText: 'Upload Files' });
   }
@@ -126,11 +194,9 @@ export class CreateDrawPage extends BasePage {
   /** Step 2: "Select File" -> "Upload Files" dialog -> choose the DBF -> Add. */
   async attachTicketFile(filePath: string): Promise<void> {
     await this.selectFileButton.click();
-    const dialog = this.uploadDialog();
-    await expect(dialog, '"Upload Files" dialog should open').toBeVisible();
-    await this.page.locator('input[type="file"]').setInputFiles(filePath); // hidden input inside the dialog
-    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(dialog).toBeHidden();
+    await this.chooseUploadFile(filePath);
+    await this.uploadDialogButton('Add').click();
+    await expect(this.uploadDialog()).toBeHidden();
   }
 
   /** Name of the attached file as listed on Step 2. */

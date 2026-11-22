@@ -1,0 +1,96 @@
+import { drawCases, DRAW_PRECONDITION as P, DRAW_TEST_DATA as D, DRAW_POSTCONDITION as C } from './lottery-draw-base';
+
+/** Allure metadata for tests/e2e/lottery-draw/lottery_draw_table.spec.ts (plan section 7). */
+export const LotteryDrawTableMetadata = drawCases('Tabs, Table & Paging', {
+  'TC-LD-TBL-001': {
+    story: 'Stage Tabs', severity: 'critical', tags: ['Regression', 'Tabs'],
+    description: 'Each stage tab requests its view and lists only draws of that stage',
+    testData: 'Tabs Under Review, Pending Approval, Approved, Rejected, On Hold',
+    steps: ['Click each tab', 'Check the request view, the selected tab and every Status cell'],
+    expectedResult: 'Request view underReview / pendingApproval / approved / rejected / onHold; the tab is selected; every visible Status belongs to that stage (no counts asserted)',
+  },
+  'TC-LD-TBL-002': {
+    story: 'Stage Tabs', severity: 'normal', tags: ['Regression', 'Tabs'],
+    description: 'The In Play, In Play Post Cutoff, Completed, Winning Uploaded and Deleted tabs load',
+    testData: 'Views inPlay, inPlayPostCutoff, completed, winningUploaded, deleted',
+    steps: ['Click each tab'],
+    expectedResult: 'HTTP 200; the table renders (rows or empty); no error toast',
+  },
+  'TC-LD-TBL-003': {
+    story: 'Stage Tabs', severity: 'critical', tags: ['Regression', 'Tabs'],
+    description: 'A new draw is listed under All and Under Review only',
+    preconditions: P.OWN_DRAW, testData: D.WITH_TICKETS,
+    steps: ['Search the own code on every tab'],
+    expectedResult: 'Present on All and Under Review; absent from every other stage tab',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-TBL-004': {
+    story: 'Sorting', severity: 'normal', tags: ['Regression', 'Sorting'],
+    description: 'The default order is newest Draw Date first',
+    steps: ['Load the list', 'Read the Draw Date of the visible rows'],
+    expectedResult: 'Request sortBy=endDate, sortDir=desc; Draw Dates are non-increasing',
+  },
+  'TC-LD-TBL-005': {
+    story: 'Sorting', severity: 'normal', tags: ['Regression', 'Sorting'],
+    description: 'The Draw Date header toggles ascending / descending',
+    steps: ['Click Draw Date', 'Click Draw Date again'],
+    expectedResult: 'sortDir asc then desc in the request; the visible Draw Dates are ordered accordingly',
+  },
+  'TC-LD-TBL-006': {
+    story: 'Sorting', severity: 'normal', tags: ['Regression', 'Sorting'],
+    description: 'Draw Code, Status, Start Date and Ticket Count headers sort the list',
+    steps: ['Click each header'],
+    expectedResult: 'Request sortBy drawCode / status / startDate / ticketCount with sortDir asc; URL ?sortBy=..&sortDir=asc; rows ordered by that column',
+    actualResult: 'Draw Code ascending is not in order (e.g. "... 2026110416, 0003" on page 1)',
+  },
+  'TC-LD-TBL-007': {
+    story: 'Sorting', severity: 'minor', tags: ['Regression', 'Sorting'],
+    description: 'Cut Off Date and Remaining Count are not sortable',
+    steps: ['Click the Cut Off Date header', 'Click the Remaining Count header'],
+    expectedResult: 'No new list request and no sort arrow (documented behaviour - confirm with product)',
+  },
+  'TC-LD-TBL-008': {
+    story: 'Paging', severity: 'critical', tags: ['Regression', 'Paging'],
+    description: 'Next / previous buttons and the page input navigate the list',
+    steps: ['Click next', 'Click previous', 'Type 3 in the page box and press Enter'],
+    expectedResult: 'Requests page 1, 0, 2 (0-based); the page box mirrors the page; 10 rows per page; rows differ from page 1',
+  },
+  'TC-LD-TBL-009': {
+    story: 'Paging', severity: 'normal', tags: ['Regression', 'Paging', 'Validation'],
+    description: 'Out-of-range page numbers are clamped',
+    testData: '999, 0, abc',
+    steps: ['Type each value into the page box and press Enter'],
+    expectedResult: 'Stays on a valid page (within 1..last); no error; non-numeric text is not accepted',
+  },
+  'TC-LD-TBL-010': {
+    story: 'Paging', severity: 'normal', tags: ['Regression', 'Paging'],
+    description: 'Switching tab resets paging to page 1',
+    preconditions: 'On the All tab, page 2 or later',
+    steps: ['Go to page 2', 'Click the Rejected tab'],
+    expectedResult: 'Request page 0; the page box shows 1',
+  },
+  'TC-LD-TBL-011': {
+    story: 'Column Toggles', severity: 'normal', tags: ['Regression', 'UI'],
+    description: 'Quick toggle chips show / hide columns and the choice persists',
+    preconditions: 'localStorage "drawTableVisibleColumns" not set', testData: 'Chips "Sold %" and "Type"',
+    steps: ['Click the "Sold %" chip', 'Click the "Type" chip', 'Reload'],
+    expectedResult: '"Sold %" column appears and "Type" disappears; the choice survives the reload',
+    actualResult: 'The choice is written to localStorage "drawTableVisibleColumns" but reset on reload - "Sold %" disappears again',
+    postconditions: 'localStorage "drawTableVisibleColumns" removed',
+  },
+  'TC-LD-TBL-012': {
+    story: 'Network Health', severity: 'minor', tags: ['Regression', 'Performance'],
+    description: 'Opening the list does not fire failing per-row requests',
+    testData: 'Sort by Draw Date ascending (shows legacy draws)',
+    steps: ['Sort by Draw Date ascending', 'Collect failed responses (>= 400)'],
+    expectedResult: 'No failing requests',
+  },
+  'TC-LD-TBL-013': {
+    story: 'Status Column', severity: 'minor', tags: ['Regression', 'UI'],
+    description: 'A held draw is listed under On Hold and its Status reads clearly',
+    preconditions: P.OWN_DRAW, testData: 'Own draw put On Hold',
+    steps: ['Row menu > Hold Draw', 'Check the All tab and click the On Hold tab'],
+    expectedResult: 'Listed under On Hold; Status shows the hold (e.g. "On Hold Under Review")',
+    postconditions: 'Draw re-activated and rejected',
+  },
+});

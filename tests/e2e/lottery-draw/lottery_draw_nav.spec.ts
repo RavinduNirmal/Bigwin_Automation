@@ -5,7 +5,7 @@ import { TestHelper } from '../../../utils/helpers/common';
 import { registerAllMetadata } from '../../../data/metadata/index';
 import { CreateDrawPage } from '../../../pages/draw/create-draw.page';
 import { DRAW_TAB, toDisplay } from '../../../data/factories/lottery-draw-data.factory';
-import { createUniqueDraw, cleanupDraws } from '../../../utils/helpers/lottery-draw';
+import { createUniqueDraw, reviewDrawAndVerify, cleanupDraws } from '../../../utils/helpers/lottery-draw';
 
 registerAllMetadata();
 
@@ -80,5 +80,98 @@ combinedTest.describe('Lottery Draw Navigation & Display', () => {
     expect(actions, 'An Under Review draw cannot be approved yet').not.toContain('Approve Draw');
     await list.closeRowMenu();
     TestHelper.success('Row menu verified');
+  });
+
+  combinedTest('TC-LD-NAV-006: Row menu of a Pending Approval draw offers Reject and Approve Draw', async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData }) => {
+    await TestHelper.initTest('TC-LD-NAV-006', page);
+    // 1. Meta: own draw, reviewed -> Pending Approval
+    const draw = await createUniqueDraw(createDrawPage, testLotteryDrawData);
+    await reviewDrawAndVerify(list, draw.code);
+
+    // 2. Open the row menu
+    await list.open();
+    await list.findDraw(draw.code);
+    const actions = await list.openRowMenu(draw.code);
+    await TestHelper.attachText('Row menu', actions.join('\n'));
+    expect(actions).toEqual(expect.arrayContaining(['View', 'Add Tickets', 'Quick Settings', 'Reject', 'Approve Draw', 'Hold Draw']));
+    expect(actions, 'A Pending Approval draw has already been reviewed').not.toContain('Review Draw');
+    await list.closeRowMenu();
+
+    await list.open();
+    await list.rejectDraw(draw.code);
+    TestHelper.success('Pending Approval row menu verified');
+  });
+
+  combinedTest('TC-LD-NAV-007: View menu item and Draw Code link open the same draw page', async ({ page, lotteryDrawListPage: list, createDrawPage, lotteryDrawDetailPage: detail, testLotteryDrawData }) => {
+    await TestHelper.initTest('TC-LD-NAV-007', page);
+    const draw = await createUniqueDraw(createDrawPage, testLotteryDrawData);
+    const drawUrl = new RegExp(`edit-lottery-draw\\?drawId=${draw.drawId}$`);
+
+    // 2. Row menu > View
+    await list.open();
+    await list.findDraw(draw.code);
+    await list.openRowMenu(draw.code);
+    await list.menuAction('View').click();
+    await expect(page).toHaveURL(drawUrl);
+    await detail.verifyLoaded(draw.code);
+    await expect(detail.heading()).toHaveText(`${draw.code} | ${draw.brand}`);
+
+    // go back; click the code link
+    await list.open();
+    await list.findDraw(draw.code);
+    await list.codeLinkFor(draw.code).click();
+    await expect(page).toHaveURL(drawUrl);
+    await detail.verifyLoaded(draw.code);
+    await expect(detail.heading()).toHaveText(`${draw.code} | ${draw.brand}`);
+    TestHelper.success('View and the code link land on the same draw page');
+  });
+
+  combinedTest('TC-LD-NAV-008: Back link and browser Back return to the list', async ({ page, lotteryDrawListPage: list, createDrawPage, lotteryDrawDetailPage: detail, testLotteryDrawData }) => {
+    await TestHelper.initTest('TC-LD-NAV-008', page);
+    const draw = await createUniqueDraw(createDrawPage, testLotteryDrawData);
+    await list.open();
+    await list.findDraw(draw.code);
+
+    // 2. Click 'Back'
+    await list.codeLinkFor(draw.code).click();
+    await detail.verifyLoaded(draw.code);
+    await detail.backLink.click();
+    await expect(page).toHaveURL(/\/dashboard\/draw(\?.*)?$/);
+    await list.verifyPageLoaded();
+
+    // reopen and press browser Back
+    await list.findDraw(draw.code);
+    await list.codeLinkFor(draw.code).click();
+    await detail.verifyLoaded(draw.code);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/dashboard\/draw(\?.*)?$/);
+    await list.verifyPageLoaded();
+    TestHelper.success('Back link and browser Back return to the Draws list');
+  });
+
+  combinedTest('TC-LD-NAV-009: Create Draw button opens /dashboard/draw/create-draw', async ({ page, lotteryDrawListPage: list, createDrawPage: create }) => {
+    await TestHelper.initTest('TC-LD-NAV-009', page);
+    await list.createDrawButton().click();
+    await expect(page).toHaveURL(/\/dashboard\/draw\/create-draw/);
+    await expect(page).toHaveTitle('Create Draw | BigWin');
+    await expect(create.heading).toBeVisible();
+    await expect(create.stepLabel('Details'), 'Stepper "Step 1 Details"').toBeVisible();
+    await expect(create.stepLabel('Upload'), 'Stepper "Step 2 Upload"').toBeVisible();
+    await expect(create.nextButton, 'Step 1 form shown').toBeVisible();
+    TestHelper.success('Create Draw page opened');
+  });
+
+  combinedTest('TC-LD-NAV-010: Opening a draw page title is a meaningful BigWin title', async ({ page, lotteryDrawListPage: list, createDrawPage, lotteryDrawDetailPage: detail, testLotteryDrawData }) => {
+    await TestHelper.initTest('TC-LD-NAV-010', page);
+    const draw = await createUniqueDraw(createDrawPage, testLotteryDrawData);
+    await list.open();
+    await list.findDraw(draw.code);
+    await list.codeLinkFor(draw.code).click();
+    await detail.verifyLoaded(draw.code);
+    const title = await page.title();
+    await TestHelper.attachText('Document title', title);
+    // Expected e.g. "Draw: View | BigWin"; the app shows the template leftover "Foundation: Blank Page | Carpatin"
+    await expect(page, `Draw page title should be a BigWin title like "Draw: View | BigWin" but is "${title}"`).toHaveTitle(/\| BigWin$/);
+    TestHelper.success('Draw page title is a BigWin title');
   });
 });

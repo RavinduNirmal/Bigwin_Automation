@@ -1,6 +1,7 @@
-import { expect } from '@playwright/test';
+import { Response, expect } from '@playwright/test';
 import { CreateDrawPage, CreatedDraw } from '../../../pages/draw/create-draw.page';
 import { DrawRow, LotteryDrawListPage } from '../../../pages/draw/lottery-draw-list.page';
+import { LotteryDrawDetailPage } from '../../../pages/draw/lottery-draw-detail.page';
 import { DrawTab, DRAW_TAB, DRAW_TAB_STATUS, LotteryDrawData } from '../../../data/factories/lottery-draw-data.factory';
 import { TicketDbfFile } from '../../dbf/ticket-dbf.service';
 import { TestHelper } from '../common/test-helper';
@@ -27,6 +28,44 @@ export async function createDrawWithTickets(
   const ids = await createDraw.createDraw(draw, ticketFile);
   await TestHelper.attachText(`Draw ${draw.code}`, JSON.stringify({ ...draw, ...ids, ticketFile }, null, 2));
   return { ...draw, ...ids, ticketFile };
+}
+
+/**
+ * Create a draw with ANY ticket file (corrupt, foreign barcodes ...) WITHOUT asserting success - for
+ * negative tests. Returns the create response status/body and the new draw id (NaN when refused).
+ */
+export async function submitDrawWithTicketFile(
+  createDraw: CreateDrawPage,
+  draw: LotteryDrawData,
+  file: { filePath: string; md5: string }
+): Promise<{ status: number; body: string; drawId: number }> {
+  await createDraw.open();
+  await createDraw.fillDetails(draw);
+  await createDraw.goToUploadStep();
+  await createDraw.attachTicketFile(file.filePath);
+  await createDraw.md5Input.fill(file.md5);
+  await createDraw.initiateNowCheckbox.check();
+  const { draw: res } = await createDraw.submitCreateDraw(draw.code);
+  const body = (await res.json().catch(() => ({}))) as { results?: number };
+  return { status: res.status(), body: JSON.stringify(body), drawId: Number(body.results) };
+}
+
+/** Wait until the draw's ticket upload reaches a final state (draw page Logs), then return the list's Ticket Count. */
+export async function waitForUploadSettled(
+  list: LotteryDrawListPage,
+  detail: LotteryDrawDetailPage,
+  drawId: number,
+  code: string,
+  timeoutMs = 3 * 60000
+): Promise<string> {
+  await expect
+    .poll(async () => {
+      await detail.open(drawId);
+      return detail.uploadLogRows().first().innerText({ timeout: 5000 }).catch(() => '');
+    }, { message: `The ticket upload of ${code} should reach a final state`, timeout: timeoutMs, intervals: [10000] })
+    .toMatch(/Completed|Failed|Error/i);
+  await list.open();
+  return (await list.getDrawData(code)).ticketCount;
 }
 
 /** Create a brand-new unique draw (far-future schedule) with its tickets. */
@@ -66,6 +105,13 @@ export async function verifyDrawStatusChange(
   timeoutMs = 30000
 ): Promise<DrawRow> {
   await list.selectTab(DRAW_TAB.ALL);
+  if (tab === DRAW_TAB.DELETED) {
+    // a removed draw leaves the All tab; it is only listed under Deleted
+    await list.searchDraws(code);
+    await expect(list.rowFor(code), `Removed draw "${code}" should no longer be listed on the All tab`).toHaveCount(0, { timeout: timeoutMs });
+    await TestHelper.attachText(`${code} status`, 'All tab: not listed -> confirming under "Deleted"');
+    return verifyDrawInStageTab(list, code, DRAW_TAB.DELETED, status);
+  }
   let seen = '';
   await expect
     .poll(async () => {
@@ -127,6 +173,32 @@ export async function approveDrawAndVerify(list: LotteryDrawListPage, code: stri
   await verifyDrawStatusChange(list, code, (seen) => (/^In Play$/i.test(seen) ? DRAW_TAB.IN_PLAY : DRAW_TAB.APPROVED), /^(Approved|In Play)$/i);
   await expectDrawNotInTab(list, code, DRAW_TAB.PENDING_APPROVAL);
   await list.selectTab(DRAW_TAB.ALL);
+}
+
+/**
+ * Pending Approval -> row menu "Reject" (PUT /api/draw/approve-reject/{id}) and confirm the draw is
+ * back to Under Review (All tab + Under Review tab). Returns the API response.
+ */
+export async function sendBackForReviewAndVerify(list: LotteryDrawListPage, code: string): Promise<Response> {
+  await list.open();
+  const res = await list.sendBackForReview(code);
+  expect(res.status(), `Sending ${code} back for review should succeed: ${await res.text().catch(() => '')}`).toBeLessThan(400);
+  await list.open();
+  await verifyDrawStatusChange(list, code, DRAW_TAB.UNDER_REVIEW);
+  return res;
+}
+
+/** Create a draw, wait for its tickets, Review and Approve it with its MD5 (confirmed at every step). Cannot be undone. */
+export async function createApprovedDraw(
+  createDraw: CreateDrawPage,
+  list: LotteryDrawListPage,
+  source: LotteryDrawDataSource,
+  overrides: Partial<LotteryDrawData> = {}
+): Promise<CreatedTestDraw> {
+  const draw = await createUniqueDraw(createDraw, source, overrides);
+  await reviewDrawAndVerify(list, draw.code, draw.ticketCount);
+  await approveDrawAndVerify(list, draw.code, draw.ticketFile.md5);
+  return draw;
 }
 
 /**
@@ -230,9 +302,22 @@ export async function cleanupDraws(list: LotteryDrawListPage, codes: string[]): 
       await list.searchDraws(code);
       if ((await list.rowFor(code).count()) === 0) continue;
       const row = await list.getDrawData(code);
-      if (!/Under Review|Pending Approval/i.test(row.status)) continue;
-      await list.rejectDraw(code);
-      logger.info(`🧹 Rejected leftover draw ${code} (${row.status})`);
+      if (/On Hold/i.test(row.status)) {
+        await list.openRowMenu(code);
+        if ((await list.menuAction('Activate Draw').count()) > 0) await list.menuAction('Activate Draw').click();
+        else await list.closeRowMenu();
+        await list.open();
+        await list.searchDraws(code);
+      }
+      const status = (await list.getDrawData(code)).status;
+      if (!/Under Review|Pending Approval/i.test(status)) continue;
+      // Pending Approval "Reject" only sends it back to Under Review - then "Reject Draw" rejects it
+      for (let i = 0; i < 2; i++) {
+        await list.open();
+        if (!/Under Review|Pending Approval/i.test((await list.getDrawData(code)).status)) break;
+        await list.rejectDraw(code);
+      }
+      logger.info(`🧹 Rejected leftover draw ${code} (was ${row.status})`);
     } catch (error) {
       logger.warn(`⚠️ Could not clean up draw ${code}: ${String(error).split('\n')[0]}`);
     }

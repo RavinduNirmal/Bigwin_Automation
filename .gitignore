@@ -51,3 +51,4 @@ Thumbs.db
 /playwright-report-rerun*/
 test-results-rerun*.json
 network-rerun-summary.json
+/playwright/.plan-data/

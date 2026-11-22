@@ -14,6 +14,12 @@ export interface TestMetadata {
   preconditions?: string;
   steps?: string[];
   expectedResult?: string;
+  /** Exact test data used / how it is generated (e.g. "Draw number 9xxxxxxxxx, 100 tickets, MD5 of the DBF"). */
+  testData?: string;
+  /** Known ACTUAL behaviour when it differs from the expected result (a reported app defect). */
+  actualResult?: string;
+  /** State left behind / cleanup done after the test. */
+  postconditions?: string;
 }
 
 export interface TestMetadataCollection {
@@ -97,6 +103,11 @@ export class TestMetadataManager {
       description += 'N/A\n';
     }
     description += `\nExpected Result:\n${metadata.expectedResult || 'N/A'}`;
+    if (metadata.testData) description = description.replace('\nSteps:\n', `\nTest Data:\n${metadata.testData}\n\nSteps:\n`);
+    description += `\n\nActual Result:\n${metadata.actualResult
+      ? `KNOWN DEFECT - ${metadata.actualResult}`
+      : 'Recorded by this run - see the test status, steps and attachments'}`;
+    if (metadata.postconditions) description += `\n\nPostconditions:\n${metadata.postconditions}`;
     return description;
   }
 

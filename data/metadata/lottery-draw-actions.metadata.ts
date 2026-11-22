@@ -1,0 +1,86 @@
+import { drawCases, DRAW_PRECONDITION as P, DRAW_TEST_DATA as D, DRAW_POSTCONDITION as C } from './lottery-draw-base';
+
+/** Allure metadata for tests/e2e/lottery-draw/lottery_draw_actions.spec.ts (plan section 9). */
+export const LotteryDrawActionsMetadata = drawCases('Row Actions', {
+  'TC-LD-ACT-001': {
+    story: 'Quick Settings', severity: 'normal', tags: ['Regression'],
+    description: 'Quick Settings shows the ticket statistics and a disabled Retain input',
+    preconditions: P.OWN_DRAW + '; tickets loaded', testData: D.WITH_TICKETS,
+    steps: ['Row menu > Quick Settings', 'Wait until "Processing..." becomes "Refresh"', 'Read the statistics'],
+    expectedResult: 'Total 100, Returnable 100, In Cart 0, Non Returnable (Wasted) 0, Sold 0, Subscription Ticket 0; "Set Retain Ticket Count" and Update disabled',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-ACT-002': {
+    story: 'Quick Settings', severity: 'minor', tags: ['Regression'],
+    description: 'Quick Settings closes with Escape and changes nothing',
+    preconditions: 'Quick Settings open on the own draw', testData: D.WITH_TICKETS,
+    steps: ['Press Escape', 'Read the row'],
+    expectedResult: 'Dialog closes; no update request; the row is unchanged',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-ACT-003': {
+    story: 'Add Tickets', severity: 'normal', tags: ['Regression'],
+    description: 'Add Tickets opens the Upload Files dialog for that draw',
+    preconditions: P.OWN_DRAW, testData: D.WITH_TICKETS,
+    steps: ['Row menu > Add Tickets'],
+    expectedResult: 'Dialog "Upload Files" with "Brand: Mahajana Sampatha", "Draw: <number>", Browse files, Cancel and Add',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-ACT-004': {
+    story: 'Add Tickets', severity: 'minor', tags: ['Regression', 'Validation'],
+    description: 'Add Tickets without a file reports "No DB files selected." and keeps the dialog open',
+    preconditions: 'Add Tickets dialog open on the own draw', testData: 'No file',
+    steps: ['Click Add'],
+    expectedResult: 'Toast "No DB files selected." and the dialog stays open',
+    actualResult: 'The toast appears but the dialog closes',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-ACT-005': {
+    story: 'Add Tickets', severity: 'normal', tags: ['Regression'],
+    description: 'Adding a second valid DBF raises Total Tickets',
+    preconditions: P.OWN_DRAW + '; 100 tickets loaded', testData: 'Second DBF continuing the sequence (<number>101..<number>200) + its MD5',
+    steps: ['Row menu > Add Tickets', 'Attach the second DBF', 'Add', 'Wait for processing', 'Open the draw page'],
+    expectedResult: 'Total Tickets 200; a second upload row Completed',
+    actualResult: 'The file is only uploaded to storage (POST ticket-service upload/private 200); no ticket upload is registered - no new Logs row, Total Tickets stays 100',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-ACT-006': {
+    story: 'Hold Draw', severity: 'critical', tags: ['Regression'],
+    description: 'Hold Draw puts the draw On Hold and Activate Draw restores it',
+    preconditions: P.OWN_DRAW, testData: D.WITH_TICKETS,
+    steps: ['Row menu > Hold Draw', 'Check the All tab and click the On Hold tab', 'Open the row menu', 'Activate Draw', 'Check the All tab and the Under Review tab'],
+    expectedResult: 'Listed under On Hold; menu shows View, Edit, Add Tickets, Quick Settings, Activate Draw, Remove Draw; after Activate Draw the Status is "Under Review" again and it is listed under Under Review',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-ACT-007': {
+    story: 'Hold Draw', severity: 'normal', tags: ['Regression'],
+    description: 'Remove Draw on an On Hold draw moves it to the Deleted tab',
+    preconditions: 'Own draw On Hold', testData: D.WITH_TICKETS,
+    steps: ['Hold the own draw', 'Row menu > Remove Draw', 'Type the draw code in the confirmation and click Remove Draw', 'Check the All tab and click the Deleted tab'],
+    expectedResult: 'The draw is listed under Deleted and no longer under On Hold',
+    actualResult: 'Remove Draw succeeds (HTTP 200) but the draw vanishes from EVERY tab - it is not listed under Deleted, which shows no rows at all',
+    // the confirmation dialog asks to type the draw code ("Enter This Draw Code For Confirmation")
+    postconditions: 'Own draw ends Deleted',
+  },
+  'TC-LD-ACT-008': {
+    story: 'Process Logs', severity: 'normal', tags: ['Regression'],
+    description: 'The Process Logs dialog lists background jobs',
+    steps: ['Click Process Logs'],
+    expectedResult: 'Dialog "Process Logs" with "<n> total jobs - Page 1 of <m>" and columns ID, Draw Number, Brand Name, Progress Label, Progress, Error, Status, Requested By, Created At, Process End At',
+  },
+  'TC-LD-ACT-009': {
+    story: 'Process Logs', severity: 'minor', tags: ['Regression'],
+    description: 'Process Logs paging works and the dialog closes with Escape',
+    preconditions: 'Process Logs dialog open',
+    steps: ['Go to page 2', 'Press Escape'],
+    expectedResult: '"Page 2 of <m>" with other rows; Escape closes the dialog',
+  },
+  'TC-LD-ACT-010': {
+    story: 'Row Scoping', severity: 'critical', tags: ['Regression'],
+    description: 'A row action changes only the clicked draw',
+    preconditions: 'Two own Under Review draws', testData: 'Two unique draws',
+    steps: ['Reject Draw on the first', 'Check both draws on the All tab'],
+    expectedResult: 'Only the first draw is Rejected; the second stays Under Review',
+    postconditions: C.REJECTED,
+  },
+});

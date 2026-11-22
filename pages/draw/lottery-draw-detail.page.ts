@@ -62,6 +62,35 @@ export class LotteryDrawDetailPage extends BasePage {
     return this.page.getByRole('table').first().getByRole('row').filter({ has: this.page.getByRole('cell') });
   }
 
+  /** "Update" button (switches to edit mode; disabled while Under Review). */
+  updateButton(): Locator { return this.page.getByRole('button', { name: 'Update', exact: true }); }
+
+  /** The "Operation logs" table (the second table on the page, after the upload "Logs"). */
+  operationLogsTable(): Locator { return this.page.getByRole('table').nth(1); }
+
+  /** A "Quick toggles:" column chip of the Operation logs table (e.g. "Entity Long Id"). */
+  quickToggleChip(name: string): Locator {
+    return this.page.getByText('Quick toggles:', { exact: true }).locator('xpath=..').getByRole('button', { name, exact: true });
+  }
+
+  /** "Winning Numbers:" label, correctly spelled (the app currently shows "Winnning Numbers:"). */
+  winningNumbersLabel(): Locator { return this.page.getByText('Winning Numbers:', { exact: true }); }
+
+  noWinningNumbersMessage(): Locator { return this.page.getByText('No winning numbers available.', { exact: true }); }
+
+  /** A not-found / unknown-draw message. */
+  notFoundMessage(): Locator { return this.page.getByText(/not found|does not exist|no such draw|no draw/i).first(); }
+
+  /** An "Operation logs" entry (audit message), e.g. "Lottery draw created successfully with code: AT9...". */
+  operationLogEntry(text: string | RegExp): Locator {
+    return this.page.getByText(text).first();
+  }
+
+  /** A column header of the "Operation logs" table (Email, Operation Type, Entity Type, Http Status, Logged At ...). */
+  operationLogColumn(name: string): Locator {
+    return this.page.getByRole('columnheader', { name }).first();
+  }
+
   async open(drawId: number): Promise<void> {
     await this.page.goto(`/dashboard/draw/edit-lottery-draw?drawId=${drawId}`);
     await this.verifyLoaded();

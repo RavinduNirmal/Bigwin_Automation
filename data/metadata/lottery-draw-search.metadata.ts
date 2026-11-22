@@ -1,0 +1,76 @@
+import { drawCases, DRAW_PRECONDITION as P, DRAW_TEST_DATA as D, DRAW_POSTCONDITION as C } from './lottery-draw-base';
+
+/** Allure metadata for tests/e2e/lottery-draw/lottery_draw_search.spec.ts (plan section 6). */
+export const LotteryDrawSearchMetadata = drawCases('Draw Search', {
+  'TC-LD-SRCH-001': {
+    story: 'Search By Code', severity: 'critical', tags: ['Smoke', 'Regression', 'Search'],
+    description: 'Searching the full Draw Code finds exactly the own draw',
+    preconditions: P.OWN_DRAW, testData: D.WITH_TICKETS,
+    steps: ['Type the full code in "Search..."', 'Press Enter'],
+    expectedResult: 'The list request carries query=<code>; exactly one row with that code; URL gets ?query=<code>',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-SRCH-002': {
+    story: 'Search By Number', severity: 'critical', tags: ['Regression', 'Search'],
+    description: 'Searching the Draw Number finds the draw',
+    preconditions: P.OWN_DRAW, testData: D.WITH_TICKETS,
+    steps: ['Search the 10-digit draw number'],
+    expectedResult: 'The own draw (code AT<number>) is listed',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-SRCH-003': {
+    story: 'Matching Rules', severity: 'normal', tags: ['Regression', 'Search'],
+    description: 'Search is case-insensitive and matches partial text',
+    preconditions: P.OWN_DRAW, testData: 'The own code in lower case; the first 7 characters of the code',
+    steps: ['Search the lower-case code', 'Search the code prefix'],
+    expectedResult: 'The own draw is in both results (other draws may match the prefix - only the own code is asserted)',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-SRCH-004': {
+    story: 'Search By Brand', severity: 'normal', tags: ['Regression', 'Search'],
+    description: 'Searching a brand name returns only that brand\'s draws',
+    testData: '"Mahajana"',
+    steps: ['Search "Mahajana"', 'Read the Lottery Name of every visible row'],
+    expectedResult: 'At least one row; every visible Lottery Name contains "Mahajana"',
+  },
+  'TC-LD-SRCH-005': {
+    story: 'Empty State', severity: 'minor', tags: ['Regression', 'Search', 'UX'],
+    description: 'A search with no match shows an empty table with a no-results message',
+    testData: '"ZZZNOPE123" (matches nothing)',
+    steps: ['Search the value'],
+    expectedResult: 'No data rows and a "No results / No data" message',
+    actualResult: 'No rows - only the header row; no message and no pager',
+  },
+  'TC-LD-SRCH-006': {
+    story: 'Clear Search', severity: 'normal', tags: ['Regression', 'Search'],
+    description: 'Clearing the search restores the full list',
+    testData: 'Any code',
+    steps: ['Search a code', 'Click "clear" (X)'],
+    expectedResult: 'Search box empty; the list is re-requested with an empty query and shows 10 rows again',
+  },
+  'TC-LD-SRCH-007': {
+    story: 'Search Within Tab', severity: 'normal', tags: ['Regression', 'Search'],
+    description: 'Search combined with a stage tab only searches that stage',
+    preconditions: P.OWN_DRAW, testData: 'The own Under Review draw\'s code',
+    steps: ['Select the Rejected tab and search the code', 'Select the Under Review tab and search the code'],
+    expectedResult: 'Not found under Rejected; found under Under Review',
+    postconditions: C.REJECTED,
+  },
+  'TC-LD-SRCH-008': {
+    story: 'Input Safety', severity: 'normal', tags: ['Regression', 'Search', 'Security'],
+    description: 'Special characters, HTML, SQL text and "%" in the search are handled safely',
+    testData: '<img src=x onerror=alert(1)>, \' OR 1=1 --, %',
+    steps: ['Search each value'],
+    expectedResult: 'No script runs and no error; HTML and SQL strings match nothing; "%" is a literal character and matches nothing',
+    actualResult: '"%" acts as a wildcard and matches every draw',
+  },
+  'TC-LD-SRCH-009': {
+    story: 'Whitespace', severity: 'minor', tags: ['Regression', 'Search'],
+    description: 'Leading and trailing spaces in the search are ignored',
+    preconditions: P.OWN_DRAW, testData: '"  <code>  "',
+    steps: ['Search the code with surrounding spaces'],
+    expectedResult: 'The own draw is found',
+    actualResult: 'Nothing is found - the query is sent untrimmed',
+    postconditions: C.REJECTED,
+  },
+});

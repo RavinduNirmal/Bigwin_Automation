@@ -1,5 +1,5 @@
 import { mergeTests } from '@playwright/test';
-import { test } from '../../../fixtures/auth.fixture';
+import { test, expect } from '../../../fixtures/auth.fixture';
 import { test as drawDataTest } from '../../../fixtures/lottery-draw-data.fixture';
 import { TestHelper } from '../../../utils/helpers/common';
 import { AllureHelpers } from '../../../utils/allure-helpers';
@@ -61,4 +61,29 @@ combinedTest.describe('Lottery Draw Lifecycle', () => {
       await stage(DRAW_TAB.COMPLETED, draw.drawDate);
       TestHelper.success('Draw moved through all scheduled stages, each confirmed on its tab');
     });
+});
+
+combinedTest.describe('Lottery Draw Lifecycle - Past Schedule', () => {
+  combinedTest.describe.configure({ mode: 'default', timeout: 240000 });
+
+  combinedTest('TC-LD-LC-002: A draw with start/cutoff in the past is not accepted or goes straight In Play', async ({ authenticatedPage, page, lotteryDrawListPage: list, createDrawPage: create, testLotteryDrawData }) => {
+    void authenticatedPage;
+    CreateDrawPage.submittedCodes.length = 0;
+    await TestHelper.initTest('TC-LD-LC-002', page);
+    await list.goto();
+
+    // 1. Meta: Create Draw open, schedule in the past (Create Draw is never submitted)
+    const draw = testLotteryDrawData.unique({ issueStart: '2020-01-01T10:00', issueCutoff: '2020-01-02T10:00', drawDate: '2020-01-03T10:00' });
+    await create.open();
+    await create.fillDetails(draw);
+
+    // 2. Click Next; a confirm (if any) is dismissed so Step 2 never opens and nothing is created
+    const confirm = await create.clickNextAndDismiss();
+
+    await expect(create.fieldError(/must be in the future|cannot be in the past|future date/i),
+      'Dates in the past (2020) should be refused with an inline error (the app accepts them and asks for confirmation)').toBeVisible({ timeout: 5000 });
+    expect(confirm, 'No create confirmation should be offered for a past schedule').toBeNull();
+    await expect(create.uploadHeading, 'Step 2 must not open').toBeHidden();
+    TestHelper.success('Past schedule refused');
+  });
 });

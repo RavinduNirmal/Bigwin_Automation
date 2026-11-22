@@ -6,7 +6,17 @@
 import { TestMetadataManager } from '../../utils/metadata-manager';
 import { LoginMetadata } from './login.metadata';
 import { LotteryBrandMetadata } from './lottery-brand.metadata';
-import { LotteryDrawMetadata } from './lottery-draw.metadata';
+import { LotteryDrawNavMetadata } from './lottery-draw-nav.metadata';
+import { LotteryDrawCreateMetadata } from './lottery-draw-create.metadata';
+import { LotteryDrawApprovalMetadata } from './lottery-draw-approval.metadata';
+import { LotteryDrawLifecycleMetadata } from './lottery-draw-lifecycle.metadata';
+import { LotteryDrawSearchMetadata } from './lottery-draw-search.metadata';
+import { LotteryDrawTableMetadata } from './lottery-draw-table.metadata';
+import { LotteryDrawViewMetadata } from './lottery-draw-view.metadata';
+import { LotteryDrawActionsMetadata } from './lottery-draw-actions.metadata';
+import { LotteryDrawValidationMetadata } from './lottery-draw-validation.metadata';
+import { LotteryDrawSecurityMetadata } from './lottery-draw-security.metadata';
+import { TicketDbfMetadata } from './ticket-dbf.metadata';
 import { LotteryTypeApprovalMetadata } from './lottery-type-approval.metadata';
 import { LotteryTypeCreateMetadata } from './lottery-type-create.metadata';
 import { LotteryTypeDeleteMetadata } from './lottery-type-delete.metadata';
@@ -18,7 +28,17 @@ import { LotteryTypeTableMetadata } from './lottery-type-table.metadata';
 export const AllTestMetadata = {
   ...LoginMetadata,
   ...LotteryBrandMetadata,
-  ...LotteryDrawMetadata,
+  ...LotteryDrawNavMetadata,
+  ...LotteryDrawCreateMetadata,
+  ...LotteryDrawApprovalMetadata,
+  ...LotteryDrawLifecycleMetadata,
+  ...LotteryDrawSearchMetadata,
+  ...LotteryDrawTableMetadata,
+  ...LotteryDrawViewMetadata,
+  ...LotteryDrawActionsMetadata,
+  ...LotteryDrawValidationMetadata,
+  ...LotteryDrawSecurityMetadata,
+  ...TicketDbfMetadata,
   ...LotteryTypeApprovalMetadata,
   ...LotteryTypeCreateMetadata,
   ...LotteryTypeDeleteMetadata,
@@ -36,7 +56,17 @@ export function registerAllMetadata(): void {
 export {
   LoginMetadata,
   LotteryBrandMetadata,
-  LotteryDrawMetadata,
+  LotteryDrawNavMetadata,
+  LotteryDrawCreateMetadata,
+  LotteryDrawApprovalMetadata,
+  LotteryDrawLifecycleMetadata,
+  LotteryDrawSearchMetadata,
+  LotteryDrawTableMetadata,
+  LotteryDrawViewMetadata,
+  LotteryDrawActionsMetadata,
+  LotteryDrawValidationMetadata,
+  LotteryDrawSecurityMetadata,
+  TicketDbfMetadata,
   LotteryTypeApprovalMetadata,
   LotteryTypeCreateMetadata,
   LotteryTypeDeleteMetadata,
