@@ -146,8 +146,16 @@ export class LotteryDrawListPage extends BasePage {
     return row;
   }
 
+  /** Search the draw, then read its row. */
   async getDrawData(code: string): Promise<DrawRow> {
-    const row = await this.findDraw(code);
+    await this.findDraw(code);
+    return this.readDrawRow(code);
+  }
+
+  /** Read the row of a draw that is already shown (no new search request). */
+  async readDrawRow(code: string): Promise<DrawRow> {
+    const row = this.rowFor(code).first();
+    await expect(row, `Draw "${code}" should be shown`).toBeVisible({ timeout: 15000 });
     const headers = (await this.page.getByRole('columnheader').allInnerTexts()).map((h) => h.trim());
     const cells = (await row.getByRole('cell').allInnerTexts()).map((c) => c.trim());
     const at = (c: DrawColumn) => cells[headers.indexOf(c)] ?? '';

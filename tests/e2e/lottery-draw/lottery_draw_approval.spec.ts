@@ -11,6 +11,7 @@ import {
   approveDrawAndVerify,
   expectDrawInTab,
   expectDrawNotInTab,
+  verifyDrawStatusChange,
   cleanupDraws,
 } from '../../../utils/helpers/lottery-draw';
 
@@ -23,6 +24,7 @@ combinedTest.describe.configure({ mode: 'default', timeout: 300000 });
  * Draw maker-checker: Under Review -> "Review Draw" -> Pending Approval -> "Approve Draw" (+ the MD5
  * of the uploaded ticket file) -> Approved. Test draws use far-future schedules, so an approved test
  * draw stays "Approved" and never goes In Play (see lottery_draw_lifecycle.spec.ts for that).
+ * Every status change is confirmed twice: the Status on the All tab, then the draw listed under its stage tab.
  */
 combinedTest.describe('Lottery Draw Review & Approval', () => {
   combinedTest.beforeEach(async ({ authenticatedPage, lotteryDrawListPage }) => {
@@ -40,7 +42,7 @@ combinedTest.describe('Lottery Draw Review & Approval', () => {
     await TestHelper.initTest('TC-LD-APR-001', page);
     const draw = await createUniqueDraw(createDrawPage, testLotteryDrawData);
     await list.open();
-    await expectDrawInTab(list, draw.code, DRAW_TAB.UNDER_REVIEW);
+    await verifyDrawStatusChange(list, draw.code, DRAW_TAB.UNDER_REVIEW);
     const actions = await list.openRowMenu(draw.code);
     expect(actions).toContain('Review Draw');
     expect(actions).not.toContain('Approve Draw');
@@ -85,7 +87,7 @@ combinedTest.describe('Lottery Draw Review & Approval', () => {
     await TestHelper.attachText('Approve response', `${res.status()} ${await res.text().catch(() => '')}`);
     expect(res.status(), 'Approval with a wrong MD5 must be refused').toBeGreaterThanOrEqual(400);
     await list.open();
-    await expectDrawInTab(list, draw.code, DRAW_TAB.PENDING_APPROVAL);
+    await verifyDrawStatusChange(list, draw.code, DRAW_TAB.PENDING_APPROVAL); // unchanged
     TestHelper.success('Wrong MD5 refused');
   });
 
@@ -106,7 +108,7 @@ combinedTest.describe('Lottery Draw Review & Approval', () => {
     expect(res, 'Reject should call the server').not.toBeNull();
     expect(res!.status()).toBeLessThan(400);
     await list.open();
-    await expectDrawInTab(list, draw.code, DRAW_TAB.REJECTED);
+    await verifyDrawStatusChange(list, draw.code, DRAW_TAB.REJECTED);
     await expectDrawNotInTab(list, draw.code, DRAW_TAB.UNDER_REVIEW);
     TestHelper.success('Rejected');
   });

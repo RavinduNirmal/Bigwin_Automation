@@ -11,3 +11,6 @@ npm run check                       # typecheck + lint
 
 Target environment and credentials: `config/env/<TEST_ENV>.json` (default `dev`).
 See `CLAUDE.md` for the architecture and conventions.
+
+#Demo
+npx playwright test -g "TC-LD-DEMO-001" --headed --workers=1

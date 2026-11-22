@@ -28,6 +28,20 @@ export const DRAW_TAB = {
 } as const;
 export type DrawTab = (typeof DRAW_TAB)[keyof typeof DRAW_TAB];
 
+/** The Status column text a draw shows while it is listed under each stage tab ("All" shows any). */
+export const DRAW_TAB_STATUS: Record<Exclude<DrawTab, 'All'>, RegExp> = {
+  'Under Review': /^Under Review$/i,
+  'Pending Approval': /^Pending Approval$/i,
+  Approved: /^Approved$/i,
+  'In Play': /^In Play$/i,
+  'In Play Post Cutoff': /cut ?off/i,
+  Completed: /^Completed$/i,
+  'Winning Uploaded': /winning/i,
+  'On Hold': /hold/i,
+  Rejected: /reject/i,
+  Deleted: /delet/i,
+};
+
 export interface DrawSchedule {
   /** "YYYY-MM-DDTHH:mm" in local time (datetime-local input format) */
   issueStart: string;
