@@ -27,6 +27,7 @@ npm run test:allure -- <playwright args>       # run + fresh Allure report (ALLU
 npm run test:network-rerun -- <playwright args> # run, then re-run ONLY tests that failed due to the network
 
 npm run check                                  # typecheck (tsc strict) + lint - run before committing
+npm run docs:scenarios                         # regenerate test-scenarios/BigWin Test Scenarios.xlsx (Overview + one tab per module) from metadata + specs + plans
 npx playwright show-report                     # view playwright-report
 ```
 

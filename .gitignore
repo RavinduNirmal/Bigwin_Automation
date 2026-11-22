@@ -18,6 +18,9 @@ test-results.json
 allure-results/
 allure-report/
 /reports/
+
+# ---------- Results ----------
+test-scenarios
 test case sheet
 
 # ---------- Secrets / local environment ----------

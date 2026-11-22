@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "docs:scenarios": "node scripts/generate-test-scenarios.js",
     "test:login": "npx playwright test login/",
     "test:lottery-type": "npx playwright test lottery-type/ --project=chromium --headed",
     "test:lottery-type:create": "npx playwright test lottery-type/lottery_type_create.spec.ts",
