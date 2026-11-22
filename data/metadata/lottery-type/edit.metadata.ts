@@ -59,6 +59,7 @@ export const LotteryTypeEditMetadata: TestMetadataCollection = {
     preconditions: 'Two lottery types created by the test exist',
     steps: ['Edit the second', 'Set its Code to the first one\'s Code', 'Update'],
     expectedResult: 'Error toast; both records unchanged',
+    actualResult: 'Changing the Code to an existing one fails silently - the save does not go through and NO error is shown',
   },
   'TC-LT-ED-008': {
     ...base, story: 'Cancel Edit', severity: 'minor', tags: ['Regression', 'Keyboard'],

@@ -157,6 +157,7 @@ export const LotteryBrandCreateMetadata = brandCases({
     preconditions: P.OWN_BRAND,
     steps: ["Enter 256 characters in Code"],
     expectedResult: "Expected inline length message and Next disabled; ACTUAL at step 1: no message, Next enabled (server result unknown)",
+    actualResult: 'At Step 1 a 256-character Code shows no length message and Next stays enabled',
   },
   "TC-LB-CR-020": {
     feature: "Create Lottery Brand", story: "Sinhala and Tamil descriptions are stored", severity: 'normal', tags: ["Regression","CR"],

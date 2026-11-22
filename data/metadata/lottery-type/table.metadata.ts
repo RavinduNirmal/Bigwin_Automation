@@ -11,6 +11,7 @@ export const LotteryTypeTableMetadata: TestMetadataCollection = {
     preconditions: 'User is on the Lottery Type page',
     steps: ['Click the Code header', 'Verify order', 'Click again', 'Verify reverse order'],
     expectedResult: 'Rows sorted by Code in the announced direction each time',
+    actualResult: 'Sorting does nothing - the list API ignores sortBy / sortDir, the order never changes',
   },
   'TC-LT-TBL-002': {
     ...base, story: 'Sorting', severity: 'normal', tags: ['Regression', 'Sorting'],
@@ -19,6 +20,7 @@ export const LotteryTypeTableMetadata: TestMetadataCollection = {
     preconditions: 'User is on the Lottery Type page',
     steps: ['Click the Type Description header'],
     expectedResult: 'Rows sorted by Type Description',
+    actualResult: 'Sorting does nothing - the list API ignores sortBy / sortDir, the order never changes',
   },
   'TC-LT-TBL-003': {
     ...base, story: 'Tabs', severity: 'critical', tags: ['Regression', 'Filtering'],
@@ -27,6 +29,7 @@ export const LotteryTypeTableMetadata: TestMetadataCollection = {
     preconditions: 'One ACTIVE and one DISABLED lottery type created by the test exist',
     steps: ['Click the "Active" tab'],
     expectedResult: 'ACTIVE record shown; DISABLED record hidden',
+    actualResult: 'The Active / Deleted tabs do nothing - the list API ignores the view, every record stays listed',
   },
   'TC-LT-TBL-004': {
     ...base, story: 'Tabs', severity: 'normal', tags: ['Regression', 'Filtering'],
@@ -35,6 +38,7 @@ export const LotteryTypeTableMetadata: TestMetadataCollection = {
     preconditions: 'A lottery type created by the test exists',
     steps: ['Click the "Deleted" tab', 'Click the "All" tab'],
     expectedResult: 'Record hidden under Deleted; listed again under All',
+    actualResult: 'The Active / Deleted tabs do nothing - the list API ignores the view, every record stays listed',
   },
   'TC-LT-TBL-005': {
     ...base, story: 'Pagination', severity: 'minor', tags: ['Regression', 'UI'],

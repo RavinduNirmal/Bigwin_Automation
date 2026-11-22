@@ -27,6 +27,7 @@ export const LotteryTypeCreateMetadata: TestMetadataCollection = {
     preconditions: 'User is on the Lottery Type page',
     steps: ['Create with Status DISABLED'],
     expectedResult: 'Row shows Status "Disabled"',
+    actualResult: 'Status DISABLED is ignored on Create - the type is saved as ACTIVE (Edit saves DISABLED correctly)',
   },
   'TC-LT-CR-004': {
     ...base, story: 'Required Fields', severity: 'critical', tags: ['Regression', 'Validation'],
@@ -75,6 +76,7 @@ export const LotteryTypeCreateMetadata: TestMetadataCollection = {
     preconditions: 'Create dialog is open',
     steps: ['Enter a Code, a Type of only spaces, Status ACTIVE', 'Click Create'],
     expectedResult: 'Not saved (a blank Type is the same as an empty one)',
+    actualResult: 'A Type of only spaces is accepted - the record is saved with an empty Type',
   },
   'TC-LT-CR-010': {
     ...base, story: 'Input Validation', severity: 'normal', tags: ['Regression', 'Validation', 'Boundary'],

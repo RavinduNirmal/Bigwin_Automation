@@ -11,6 +11,7 @@ export const LotteryTypeSearchMetadata: TestMetadataCollection = {
     preconditions: 'Two lottery types created by the test exist',
     steps: ['Type the first record\'s Code in "Search..."', 'Press Enter'],
     expectedResult: 'First record shown; second hidden',
+    actualResult: 'Search does nothing - the list API ignores the query, so every lottery type stays listed',
   },
   'TC-LT-SRCH-002': {
     ...base, story: 'Search by Type', severity: 'normal', tags: ['Regression', 'Search'],
@@ -19,6 +20,7 @@ export const LotteryTypeSearchMetadata: TestMetadataCollection = {
     preconditions: 'Two tagged and one untagged lottery types created by the test exist',
     steps: ['Search the shared tag', 'Press Enter'],
     expectedResult: 'Both tagged records shown; untagged one hidden',
+    actualResult: 'Search does nothing - the list API ignores the query, so every lottery type stays listed',
   },
   'TC-LT-SRCH-003': {
     ...base, story: 'Search by Code', severity: 'minor', tags: ['Regression', 'Search'],
@@ -27,6 +29,7 @@ export const LotteryTypeSearchMetadata: TestMetadataCollection = {
     preconditions: 'Two lottery types created by the test exist',
     steps: ['Search the first Code in lower case'],
     expectedResult: 'First record shown; second hidden',
+    actualResult: 'Search does nothing - the list API ignores the query, so every lottery type stays listed',
   },
   'TC-LT-SRCH-004': {
     ...base, story: 'No Results', severity: 'normal', tags: ['Regression', 'Search', 'Negative'],
@@ -35,6 +38,7 @@ export const LotteryTypeSearchMetadata: TestMetadataCollection = {
     preconditions: 'User is on the Lottery Type page',
     steps: ['Search a random term that no record contains'],
     expectedResult: 'No data rows are shown',
+    actualResult: 'Search does nothing - a search that matches nothing still lists every lottery type',
   },
   'TC-LT-SRCH-005': {
     ...base, story: 'Clear Search', severity: 'normal', tags: ['Regression', 'Search'],

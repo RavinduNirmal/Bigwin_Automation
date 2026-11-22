@@ -13,14 +13,12 @@ import { BasePage } from '../base.page';
 export class LotteryBrandFormPage extends BasePage {
   private readonly addNewBrandButton: Locator;
   private readonly lotteryTypeSelect: Locator;
-  private readonly lotteryTypeLabel: Locator;
 
   static readonly LIST_PATH = '/dashboard/lottery';
 
   constructor(page: Page) {
     super(page);
     this.addNewBrandButton = page.getByRole('button', { name: 'Add New Brand', exact: true });
-    this.lotteryTypeLabel = page.getByText('Select Lottery Type', { exact: true });
     this.lotteryTypeSelect = page.getByRole('button', { name: 'Select Lottery Type' });
   }
 
@@ -29,7 +27,8 @@ export class LotteryBrandFormPage extends BasePage {
     await this.page.goto(LotteryBrandFormPage.LIST_PATH);
     await this.addNewBrandButton.click({ timeout: 30000 });
     await expect(this.page, 'Add Lottery Brand form should open').toHaveURL(/\/dashboard\/lottery\/add-lottery-brand/, { timeout: 30000 });
-    await expect(this.lotteryTypeLabel.first(), '"Select Lottery Type" field should be shown').toBeVisible({ timeout: 30000 });
+    // the label text node is not exact ("Select Lottery Type *"); wait for the dropdown itself, like the wizard page object
+    await expect(this.lotteryTypeSelect, '"Select Lottery Type" field should be shown').toBeVisible({ timeout: 30000 });
     this.logger.info('📍 Add Lottery Brand form opened');
   }
 

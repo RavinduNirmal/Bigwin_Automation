@@ -35,6 +35,7 @@ export const LotteryTypeApprovalMetadata: TestMetadataCollection = {
     preconditions: 'An "Under Review" lottery type created by the test',
     steps: ['Lottery Brand -> Add New Brand', 'Open "Select Lottery Type"'],
     expectedResult: 'The unapproved lottery type is not in the list',
+    actualResult: 'Unapproved lottery types (Under Review / Pending Approval) are offered in Lottery Brand > Select Lottery Type (an Under Review type is offered)',
   },
   'TC-LT-APR-005': {
     ...base, story: 'Ready For Use', severity: 'critical', tags: ['Regression', 'Approval', 'Integration'],
@@ -43,6 +44,7 @@ export const LotteryTypeApprovalMetadata: TestMetadataCollection = {
     preconditions: 'A "Pending Approval" lottery type created by the test',
     steps: ['Review it', 'Lottery Brand -> Add New Brand', 'Open "Select Lottery Type"'],
     expectedResult: 'The lottery type is not in the list',
+    actualResult: 'Unapproved lottery types (Under Review / Pending Approval) are offered in Lottery Brand > Select Lottery Type (a Pending Approval type is offered)',
   },
   'TC-LT-APR-006': {
     ...base, story: 'Ready For Use', severity: 'blocker', tags: ['Smoke', 'Regression', 'Approval', 'Integration'],
@@ -83,5 +85,6 @@ export const LotteryTypeApprovalMetadata: TestMetadataCollection = {
     preconditions: 'An Approved lottery type created by the test',
     steps: ['Edit its Type', 'Check Lottery Brand > Select Lottery Type', 'Review + Approve', 'Check again'],
     expectedResult: 'Not offered while Under Review; offered again once re-approved',
+    actualResult: 'Unapproved lottery types (Under Review / Pending Approval) are offered in Lottery Brand > Select Lottery Type (a type edited after approval, back Under Review, is offered)',
   },
 };

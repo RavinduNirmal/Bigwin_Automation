@@ -27,6 +27,7 @@ export const LotteryTypeNavigationMetadata: TestMetadataCollection = {
     preconditions: 'User is on the Lottery Type page',
     steps: ['Verify Add New Type button', 'Verify search box', 'Verify tabs', 'Verify "Page X of Y"'],
     expectedResult: 'All controls visible; "All" tab selected',
+    actualResult: 'No tab is selected when the page loads ("All" is not selected)',
   },
   'TC-LT-NAV-004': {
     ...base, feature: 'Table Display', story: 'Row Actions', severity: 'critical', tags: ['Smoke', 'Regression', 'UI'],
@@ -43,5 +44,6 @@ export const LotteryTypeNavigationMetadata: TestMetadataCollection = {
     preconditions: 'A lottery type created by the test exists',
     steps: ['Open the row menu', 'Click Logs'],
     expectedResult: 'The audit log page opens',
+    actualResult: 'Row menu "Logs" opens /dashboard/audit-log?drawId=LOTTERY_TYPE - a 404 "Nothing here!" page',
   },
 };
