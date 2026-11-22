@@ -1,51 +1,25 @@
 /**
- * Central registry of Allure metadata, keyed by test id (TC-...).
- * Each spec calls registerAllMetadata(); each test calls TestHelper.initTest('<TC-ID>', page),
- * which looks the id up here. Add every new metadata file below.
+ * Central registry of ALL Allure metadata, keyed by test id (TC-...). Metadata lives in one folder
+ * per module (login/, lottery-type/, lottery-brand/, lottery-draw/), each with its own index.ts and
+ * register<Module>Metadata(). Specs register their own module; registerAllMetadata() loads everything
+ * (used by tools / agents). New metadata file -> add it to its module's index.ts.
  */
 import { TestMetadataManager } from '../../utils/metadata-manager';
-import { LoginMetadata } from './login.metadata';
-import { LotteryBrandMetadata } from './lottery-brand.metadata';
-import { LotteryDrawNavMetadata } from './lottery-draw-nav.metadata';
-import { LotteryDrawCreateMetadata } from './lottery-draw-create.metadata';
-import { LotteryDrawApprovalMetadata } from './lottery-draw-approval.metadata';
-import { LotteryDrawLifecycleMetadata } from './lottery-draw-lifecycle.metadata';
-import { LotteryDrawSearchMetadata } from './lottery-draw-search.metadata';
-import { LotteryDrawTableMetadata } from './lottery-draw-table.metadata';
-import { LotteryDrawViewMetadata } from './lottery-draw-view.metadata';
-import { LotteryDrawActionsMetadata } from './lottery-draw-actions.metadata';
-import { LotteryDrawValidationMetadata } from './lottery-draw-validation.metadata';
-import { LotteryDrawSecurityMetadata } from './lottery-draw-security.metadata';
-import { TicketDbfMetadata } from './ticket-dbf.metadata';
-import { LotteryTypeApprovalMetadata } from './lottery-type-approval.metadata';
-import { LotteryTypeCreateMetadata } from './lottery-type-create.metadata';
-import { LotteryTypeDeleteMetadata } from './lottery-type-delete.metadata';
-import { LotteryTypeEditMetadata } from './lottery-type-edit.metadata';
-import { LotteryTypeNavigationMetadata } from './lottery-type-nav.metadata';
-import { LotteryTypeSearchMetadata } from './lottery-type-search.metadata';
-import { LotteryTypeTableMetadata } from './lottery-type-table.metadata';
+import { LoginMetadata } from './login';
+import { LotteryTypeMetadata } from './lottery-type';
+import { LotteryBrandMetadata } from './lottery-brand';
+import { LotteryDrawMetadata } from './lottery-draw';
+
+export * from './login';
+export * from './lottery-type';
+export * from './lottery-brand';
+export * from './lottery-draw';
 
 export const AllTestMetadata = {
   ...LoginMetadata,
+  ...LotteryTypeMetadata,
   ...LotteryBrandMetadata,
-  ...LotteryDrawNavMetadata,
-  ...LotteryDrawCreateMetadata,
-  ...LotteryDrawApprovalMetadata,
-  ...LotteryDrawLifecycleMetadata,
-  ...LotteryDrawSearchMetadata,
-  ...LotteryDrawTableMetadata,
-  ...LotteryDrawViewMetadata,
-  ...LotteryDrawActionsMetadata,
-  ...LotteryDrawValidationMetadata,
-  ...LotteryDrawSecurityMetadata,
-  ...TicketDbfMetadata,
-  ...LotteryTypeApprovalMetadata,
-  ...LotteryTypeCreateMetadata,
-  ...LotteryTypeDeleteMetadata,
-  ...LotteryTypeEditMetadata,
-  ...LotteryTypeNavigationMetadata,
-  ...LotteryTypeSearchMetadata,
-  ...LotteryTypeTableMetadata,
+  ...LotteryDrawMetadata,
 };
 
 export function registerAllMetadata(): void {
@@ -53,28 +27,6 @@ export function registerAllMetadata(): void {
   console.log(`✅ Registered ${Object.keys(AllTestMetadata).length} test metadata entries`);
 }
 
-export {
-  LoginMetadata,
-  LotteryBrandMetadata,
-  LotteryDrawNavMetadata,
-  LotteryDrawCreateMetadata,
-  LotteryDrawApprovalMetadata,
-  LotteryDrawLifecycleMetadata,
-  LotteryDrawSearchMetadata,
-  LotteryDrawTableMetadata,
-  LotteryDrawViewMetadata,
-  LotteryDrawActionsMetadata,
-  LotteryDrawValidationMetadata,
-  LotteryDrawSecurityMetadata,
-  TicketDbfMetadata,
-  LotteryTypeApprovalMetadata,
-  LotteryTypeCreateMetadata,
-  LotteryTypeDeleteMetadata,
-  LotteryTypeEditMetadata,
-  LotteryTypeNavigationMetadata,
-  LotteryTypeSearchMetadata,
-  LotteryTypeTableMetadata,
-};
 
 export function getMetadataCount(): number {
   return Object.keys(AllTestMetadata).length;

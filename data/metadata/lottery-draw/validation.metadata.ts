@@ -1,4 +1,4 @@
-import { drawCases, DRAW_PRECONDITION as P, DRAW_POSTCONDITION as C } from './lottery-draw-base';
+import { drawCases, DRAW_PRECONDITION as P, DRAW_POSTCONDITION as C } from './base';
 
 /** Allure metadata for tests/e2e/lottery-draw/lottery_draw_validation.spec.ts (plan section 10). */
 const STEP1_ONLY = ' (only Step 1 > Next - Create Draw is never pressed)';

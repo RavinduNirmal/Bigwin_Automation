@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { test, expect } from '@playwright/test';
 import { TestHelper } from '../../utils/helpers/common';
-import { registerAllMetadata } from '../../data/metadata/index';
+import { registerLotteryDrawMetadata } from '../../data/metadata/lottery-draw';
 import {
   generateTicketRecords,
   writeTicketDbf,
@@ -10,7 +10,7 @@ import {
   md5Of,
 } from '../../utils/dbf/ticket-dbf.service';
 
-registerAllMetadata();
+registerLotteryDrawMetadata();
 
 /**
  * Unit tests of utils/dbf/ticket-dbf.service.ts - the Node port of utils/dbf_ticket_generator.html.

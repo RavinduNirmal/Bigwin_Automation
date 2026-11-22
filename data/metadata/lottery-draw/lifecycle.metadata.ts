@@ -1,4 +1,4 @@
-import { drawCases, DRAW_PRECONDITION as P, DRAW_POSTCONDITION as C } from './lottery-draw-base';
+import { drawCases, DRAW_PRECONDITION as P, DRAW_POSTCONDITION as C } from './base';
 
 /** Allure metadata for lottery_draw_lifecycle.spec.ts and lottery_draw_demo.spec.ts (plan section 4). */
 export const LotteryDrawLifecycleMetadata = drawCases('Draw Lifecycle', {

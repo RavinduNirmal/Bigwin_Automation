@@ -1,0 +1,77 @@
+import { brandCases, BRAND_PRECONDITION as P } from './base';
+
+/** Allure metadata for tests/e2e/lottery-brand/lottery_brand_use.spec.ts (from specs/lottery-brand-test-plan.md). */
+export const LotteryBrandUseMetadata = brandCases({
+  "TC-LB-USE-001": {
+    feature: "Brand Ready For Use", story: "Create Draw brand dropdown only requests APPROVED + ACTIVE brands", severity: 'normal', tags: ["Regression","Approval"],
+    tms: "TC-LB-USE-001",
+    description: "Create Draw brand dropdown only requests APPROVED + ACTIVE brands",
+    preconditions: P.OWN_BRAND,
+    steps: ["Sidebar Lottery Draws > Draws > Create Draw (/dashboard/draw/create-draw) (read-only; NEVER click Next/submit); open 'Lottery Brand'"],
+    expectedResult: "Request POST /api/lottery/brands/simple with body {approvalStatus:'APPROVED', status:'ACTIVE'}; dropdown lists brand NAMES only (41 options)",
+  },
+  "TC-LB-USE-002": {
+    feature: "Brand Ready For Use", story: "Under Review brand is not offered", severity: 'critical', tags: ["Smoke","Regression","Approval"],
+    tms: "TC-LB-USE-002",
+    description: "Under Review brand is not offered",
+    preconditions: P.OWN_BRAND,
+    steps: ["Create own brand (Under Review), open the Create Draw brand dropdown"],
+    expectedResult: "Own brand NOT listed. VERIFIED on the edited-and-returned-to-Under-Review brand (41 options, no ATPLAN)",
+  },
+  "TC-LB-USE-003": {
+    feature: "Brand Ready For Use", story: "Pending Approval brand is not offered", severity: 'critical', tags: ["Smoke","Regression","Approval"],
+    tms: "TC-LB-USE-003",
+    description: "Pending Approval brand is not offered",
+    preconditions: P.OWN_BRAND,
+    steps: ["Review own brand, open the Create Draw dropdown"],
+    expectedResult: "Own brand NOT listed (41 options)",
+  },
+  "TC-LB-USE-004": {
+    feature: "Brand Ready For Use", story: "Approved brand is offered", severity: 'critical', tags: ["Smoke","Regression","Approval"],
+    tms: "TC-LB-USE-004",
+    description: "Approved brand is offered",
+    preconditions: P.OWN_BRAND,
+    steps: ["Approve own brand, reload Create Draw, open the dropdown"],
+    expectedResult: "Own brand name listed (42 options). Do not select or submit",
+  },
+  "TC-LB-USE-005": {
+    feature: "Brand Ready For Use", story: "Edited Approved brand is not offered until re-approved", severity: 'critical', tags: ["Smoke","Regression","Approval"],
+    tms: "TC-LB-USE-005",
+    description: "Edited Approved brand is not offered until re-approved",
+    preconditions: P.OWN_BRAND,
+    steps: ["Edit the approved brand, check the dropdown; Review + Approve, check again"],
+    expectedResult: "NOT listed while Under Review/Pending Approval (verified); listed once re-approved",
+  },
+  "TC-LB-USE-006": {
+    feature: "Brand Ready For Use", story: "DISABLED brand is not offered", severity: 'normal', tags: ["Regression","Approval"],
+    tms: "TC-LB-USE-006",
+    description: "DISABLED brand is not offered",
+    preconditions: P.OWN_BRAND,
+    steps: ["Set an approved brand to DISABLED and re-approve"],
+    expectedResult: "Not listed",
+  },
+  "TC-LB-USE-007": {
+    feature: "Brand Ready For Use", story: "Deleted brand is not offered", severity: 'normal', tags: ["Regression","Approval"],
+    tms: "TC-LB-USE-007",
+    description: "Deleted brand is not offered",
+    preconditions: P.OWN_BRAND,
+    steps: ["Approve, delete, open the dropdown"],
+    expectedResult: "Not listed",
+  },
+  "TC-LB-USE-008": {
+    feature: "Brand Ready For Use", story: "Brand whose Lottery Type is later edited, disabled or deleted", severity: 'normal', tags: ["Regression","Approval"],
+    tms: "TC-LB-USE-008",
+    description: "Brand whose Lottery Type is later edited, disabled or deleted",
+    preconditions: P.OWN_BRAND,
+    steps: ["Using an ATPLAN-owned lottery type, approve a brand on it, then edit/disable/delete the type"],
+    expectedResult: "Product decision: brand should be flagged/blocked or follow the type; record actual",
+  },
+  "TC-LB-USE-009": {
+    feature: "Brand Ready For Use", story: "Lottery type shown in the list matches the brand's type", severity: 'normal', tags: ["Regression","Approval"],
+    tms: "TC-LB-USE-009",
+    description: "Lottery type shown in the list matches the brand's type",
+    preconditions: P.OWN_BRAND,
+    steps: ["Create a brand with type Passive and read the row"],
+    expectedResult: "Type column 'Passive' (API lotteryType code PASS)",
+  },
+});

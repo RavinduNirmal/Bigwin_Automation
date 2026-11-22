@@ -18,6 +18,7 @@ test-results.json
 allure-results/
 allure-report/
 /reports/
+test case sheet
 
 # ---------- Secrets / local environment ----------
 # Real values live only on each machine (or in CI secrets). .env.example is the committed template.

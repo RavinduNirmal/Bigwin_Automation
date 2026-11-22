@@ -1,4 +1,4 @@
-import { drawCases, DRAW_PRECONDITION as P, DRAW_TEST_DATA as D, DRAW_POSTCONDITION as C } from './lottery-draw-base';
+import { drawCases, DRAW_PRECONDITION as P, DRAW_TEST_DATA as D, DRAW_POSTCONDITION as C } from './base';
 
 /** Allure metadata for tests/e2e/lottery-draw/lottery_draw_actions.spec.ts (plan section 9). */
 export const LotteryDrawActionsMetadata = drawCases('Row Actions', {

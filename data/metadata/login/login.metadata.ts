@@ -1,4 +1,4 @@
-import { TestMetadataCollection } from '../../utils/metadata-manager';
+import { TestMetadataCollection } from '../../../utils/metadata-manager';
 
 /** Allure metadata for tests/e2e/login/login.spec.ts (keyed by TC id). */
 const base = {

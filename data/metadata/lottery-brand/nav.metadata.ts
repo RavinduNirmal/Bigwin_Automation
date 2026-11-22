@@ -1,0 +1,78 @@
+import { brandCases, BRAND_PRECONDITION as P } from './base';
+
+/** Allure metadata for tests/e2e/lottery-brand/lottery_brand_nav.spec.ts (from specs/lottery-brand-test-plan.md). */
+export const LotteryBrandNavMetadata = brandCases({
+  "TC-LB-NAV-001": {
+    feature: "Navigation", story: "Navigate to Lottery Brand from the sidebar", severity: 'critical', tags: ["Smoke","Regression","NAV"],
+    tms: "TC-LB-NAV-001",
+    description: "Navigate to Lottery Brand from the sidebar",
+    preconditions: P.OWN_BRAND,
+    steps: ["Expand sidebar 'Lottery' and click link 'Lottery Brand'"],
+    expectedResult: "URL ends with /dashboard/lottery | Page title 'Lottery: List | BigWin' | Heading 'Lottery Brands' visible",
+  },
+  "TC-LB-NAV-002": {
+    feature: "Navigation", story: "Table shows Code, Brand Name, Type, Status, Stage and Price columns", severity: 'normal', tags: ["Regression","NAV"],
+    tms: "TC-LB-NAV-002",
+    description: "Table shows Code, Brand Name, Type, Status, Stage and Price columns",
+    preconditions: P.OWN_BRAND,
+    steps: ["Inspect the table header"],
+    expectedResult: "Sortable column buttons Code, Brand Name, Type, Status, Stage, Price, plus a select-all checkbox column and an unnamed actions column",
+  },
+  "TC-LB-NAV-003": {
+    feature: "Navigation", story: "Page shows Add New Brand, search, Status filter, five tabs and page info", severity: 'normal', tags: ["Regression","NAV"],
+    tms: "TC-LB-NAV-003",
+    description: "Page shows Add New Brand, search, Status filter, five tabs and page info",
+    preconditions: P.OWN_BRAND,
+    steps: ["Open Lottery Brand"],
+    expectedResult: "'Add New Brand' button (inside a link to /dashboard/lottery/add-lottery-brand) | 'Search...' textbox with 'clear' button | Tabs All, Under Review, Pending Approval, Approved, Deleted with 'All' aria-selected=true | 'Status' select showing 'All' | 'Page X of Y' with Previous disabled on page 1",
+  },
+  "TC-LB-NAV-004": {
+    feature: "Navigation", story: "Row actions menu offers View, Edit and Delete only", severity: 'normal', tags: ["Regression","NAV"],
+    tms: "TC-LB-NAV-004",
+    description: "Row actions menu offers View, Edit and Delete only",
+    preconditions: P.OWN_BRAND,
+    steps: ["Create own brand, search its code, click its unnamed row-actions button"],
+    expectedResult: "role=menu with menuitems exactly View, Edit, Delete (no Logs item)",
+  },
+  "TC-LB-NAV-005": {
+    feature: "Navigation", story: "Row menu closes with Escape", severity: 'normal', tags: ["Regression","NAV"],
+    tms: "TC-LB-NAV-005",
+    description: "Row menu closes with Escape",
+    preconditions: P.OWN_BRAND,
+    steps: ["Open the row menu, press Escape"],
+    expectedResult: "Menu closes; focus returns to a button; record unchanged",
+  },
+  "TC-LB-NAV-006": {
+    feature: "Navigation", story: "Code and Brand Name cells link to the brand page", severity: 'normal', tags: ["Regression","NAV"],
+    tms: "TC-LB-NAV-006",
+    description: "Code and Brand Name cells link to the brand page",
+    preconditions: P.OWN_BRAND,
+    steps: ["Click the own brand's Code link","Click Back (page button) / browser Back"],
+    expectedResult: "Navigates to /dashboard/lottery/edit-lottery-brand?lotteryId={id}; heading '<code> | <name>' | Returns to the Lottery Brands list with the table",
+  },
+  "TC-LB-NAV-007": {
+    feature: "Navigation", story: "View and Edit menu items open the same brand page", severity: 'normal', tags: ["Regression","NAV"],
+    tms: "TC-LB-NAV-007",
+    description: "View and Edit menu items open the same brand page",
+    preconditions: P.OWN_BRAND,
+    steps: ["Row menu > View, then go back and row menu > Edit"],
+    expectedResult: "Both open /dashboard/lottery/edit-lottery-brand?lotteryId={id}; one tab 'View'; read-only fields plus buttons Review (Under Review) and Update. Editing only starts after clicking 'Update' (see section 3)",
+  },
+  "TC-LB-NAV-008": {
+    feature: "Navigation", story: "Status and Stage labels for a new brand", severity: 'normal', tags: ["Regression","NAV"],
+    tms: "TC-LB-NAV-008",
+    description: "Status and Stage labels for a new brand",
+    preconditions: P.OWN_BRAND,
+    steps: ["Create own brand and read its row"],
+    expectedResult: "Type 'Passive', Status 'Active', Stage 'Under Review', Price as entered (e.g. 25)",
+  },
+  "TC-LB-NAV-009": {
+    feature: "Navigation", story: "Opening a brand id that does not exist", severity: 'normal', tags: ["Regression","NAV","Known-Defect"],
+    tms: "TC-LB-NAV-009",
+    description: "Opening a brand id that does not exist",
+    preconditions: P.OWN_BRAND,
+    steps: ["Browse to /dashboard/lottery/edit-lottery-brand?lotteryId=99999"],
+    expectedResult: "A clear 'not found' message or redirect to the list. ACTUAL: an empty form (no heading, empty fields, config inputs blank) with 4 console errors and no message",
+    actualResult: "an empty form (no heading, empty fields, config inputs blank) with 4 console errors and no message",
+  },
+});

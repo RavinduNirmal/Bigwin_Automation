@@ -2,12 +2,12 @@ import { mergeTests } from '@playwright/test';
 import { test, expect } from '../../../fixtures/auth.fixture';
 import { test as drawDataTest } from '../../../fixtures/lottery-draw-data.fixture';
 import { TestHelper } from '../../../utils/helpers/common';
-import { registerAllMetadata } from '../../../data/metadata/index';
+import { registerLotteryDrawMetadata } from '../../../data/metadata/lottery-draw';
 import { CreateDrawPage } from '../../../pages/draw/create-draw.page';
 import { DRAW_TAB, DEFAULT_DRAW_BRAND } from '../../../data/factories/lottery-draw-data.factory';
 import { createUniqueDraw, expectDrawInTab, waitForTicketsLoaded, cleanupDraws } from '../../../utils/helpers/lottery-draw';
 
-registerAllMetadata();
+registerLotteryDrawMetadata();
 
 const combinedTest = mergeTests(test, drawDataTest);
 combinedTest.describe.configure({ mode: 'default', timeout: 300000 });

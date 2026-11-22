@@ -1,4 +1,4 @@
-import { TestMetadata, TestMetadataCollection } from '../../utils/metadata-manager';
+import { TestMetadata, TestMetadataCollection } from '../../../utils/metadata-manager';
 
 /**
  * Shared builder for the Lottery Draw metadata files (lottery-draw-*.metadata.ts), one file per spec:

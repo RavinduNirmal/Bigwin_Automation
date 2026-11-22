@@ -3,7 +3,7 @@ import { test, expect } from '../../../fixtures/auth.fixture';
 import { test as brandDataTest } from '../../../fixtures/lottery-brand-data.fixture';
 import { test as typeDataTest } from '../../../fixtures/lottery-type-data.fixture';
 import { TestHelper } from '../../../utils/helpers/common';
-import { registerAllMetadata } from '../../../data/metadata/index';
+import { registerLotteryBrandMetadata } from '../../../data/metadata/lottery-brand';
 import { AddBrandWizardPage } from '../../../pages/lottery-brand/add-brand-wizard.page';
 import { LotteryTypeCreateModal } from '../../../pages/lottery-type/lottery-type-create.modal';
 import {
@@ -15,7 +15,7 @@ import {
 } from '../../../utils/helpers/lottery-brand';
 import { createUniqueLotteryType, cleanupLotteryTypes } from '../../../utils/helpers/lottery-type';
 
-registerAllMetadata();
+registerLotteryBrandMetadata();
 
 const combinedTest = mergeTests(test, brandDataTest, typeDataTest);
 combinedTest.describe.configure({ mode: 'default', timeout: 240000 });

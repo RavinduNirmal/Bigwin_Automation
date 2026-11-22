@@ -2,7 +2,7 @@ import { mergeTests } from '@playwright/test';
 import { test } from '../../../fixtures/auth.fixture';
 import { test as dataTest } from '../../../fixtures/lottery-type-data.fixture';
 import { TestHelper } from '../../../utils/helpers/common';
-import { registerAllMetadata } from '../../../data/metadata/index';
+import { registerLotteryTypeMetadata } from '../../../data/metadata/lottery-type';
 import { LotteryTypeCreateModal } from '../../../pages/lottery-type/lottery-type-create.modal';
 import {
   STAGE_APPROVED,
@@ -20,7 +20,7 @@ import {
   cleanupLotteryTypes,
 } from '../../../utils/helpers/lottery-type';
 
-registerAllMetadata();
+registerLotteryTypeMetadata();
 
 const combinedTest = mergeTests(test, dataTest);
 combinedTest.describe.configure({ mode: 'default', timeout: 300000 });

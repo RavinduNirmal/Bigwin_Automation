@@ -1,4 +1,4 @@
-import { TestMetadataCollection } from '../../utils/metadata-manager';
+import { TestMetadataCollection } from '../../../utils/metadata-manager';
 
 /** Allure metadata for tests/e2e/lottery-type/lottery_type_table.spec.ts */
 const base = { epic: 'Lottery Management', feature: 'Lottery Type Table', owner: 'QA Team' } as const;

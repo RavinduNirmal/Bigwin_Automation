@@ -1,4 +1,4 @@
-import { drawCases } from './lottery-draw-base';
+import { drawCases } from './base';
 
 /** Allure metadata for tests/unit/ticket-dbf.service.spec.ts (plan section 5). */
 const SERVICE = 'utils/dbf/ticket-dbf.service.ts (no browser needed)';

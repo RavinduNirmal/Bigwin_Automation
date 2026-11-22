@@ -2,7 +2,7 @@ import { mergeTests } from '@playwright/test';
 import { test, expect } from '../../../fixtures/auth.fixture';
 import { test as brandDataTest } from '../../../fixtures/lottery-brand-data.fixture';
 import { TestHelper } from '../../../utils/helpers/common';
-import { registerAllMetadata } from '../../../data/metadata/index';
+import { registerLotteryBrandMetadata } from '../../../data/metadata/lottery-brand';
 import { AddBrandWizardPage } from '../../../pages/lottery-brand/add-brand-wizard.page';
 import {
   createUniqueBrand,
@@ -14,7 +14,7 @@ import {
   cleanupBrands,
 } from '../../../utils/helpers/lottery-brand';
 
-registerAllMetadata();
+registerLotteryBrandMetadata();
 
 const combinedTest = mergeTests(test, brandDataTest);
 combinedTest.describe.configure({ mode: 'default', timeout: 300000 });

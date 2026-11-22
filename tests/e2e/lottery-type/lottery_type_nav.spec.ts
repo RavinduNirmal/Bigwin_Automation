@@ -3,11 +3,11 @@ import { test, expect } from '../../../fixtures/auth.fixture';
 import { test as dataTest } from '../../../fixtures/lottery-type-data.fixture';
 import { AllureHelpers } from '../../../utils/allure-helpers';
 import { TestHelper } from '../../../utils/helpers/common';
-import { registerAllMetadata } from '../../../data/metadata/index';
+import { registerLotteryTypeMetadata } from '../../../data/metadata/lottery-type';
 import { LotteryTypeCreateModal } from '../../../pages/lottery-type/lottery-type-create.modal';
 import { createUniqueLotteryType, cleanupLotteryTypes } from '../../../utils/helpers/lottery-type';
 
-registerAllMetadata();
+registerLotteryTypeMetadata();
 
 const combinedTest = mergeTests(test, dataTest);
 combinedTest.describe.configure({ mode: 'default', timeout: 180000 });

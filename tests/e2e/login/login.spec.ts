@@ -1,11 +1,11 @@
 import { test, expect } from '../../../fixtures/auth.fixture';
 import { AllureHelpers } from '../../../utils/allure-helpers';
 import { TestHelper } from '../../../utils/helpers/common';
-import { registerAllMetadata } from '../../../data/metadata/index';
+import { registerLoginMetadata } from '../../../data/metadata/login';
 import { lotteryTypeDataFactory } from '../../../data/factories/lottery-type-data.factory';
 import { LOGIN_RESPONSE_TIMEOUT } from '../../../pages/auth/login.page';
 
-registerAllMetadata();
+registerLoginMetadata();
 
 /**
  * BigWin admin login (/auth/jwt/login): email + password, then a 6-digit OTP.
