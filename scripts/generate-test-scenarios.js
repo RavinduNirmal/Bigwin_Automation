@@ -53,7 +53,7 @@ for (const file of walk(path.join(ROOT, 'tests'))) {
 
 // ---- plan notes (reason a scenario is not automated / not verifiable)
 const planNote = {};
-for (const plan of ['lottery-type', 'lottery-brand', 'lottery-draw']) {
+for (const plan of ['lottery-type', 'lottery-brand', 'lottery-draw', 'lottery-draw-checksum']) {
   const file = path.join(ROOT, 'specs', `${plan}-test-plan.md`);
   if (!fs.existsSync(file)) continue;
   for (const m of fs.readFileSync(file, 'utf8').matchAll(/^#### [\d.]+ (TC-[A-Z0-9]+-[A-Z0-9]+-\d+): (.*)$/gm)) {
@@ -75,7 +75,17 @@ const MODULES = [
     specs: 'tests/e2e/lottery-brand/', plan: 'specs/lottery-brand-test-plan.md', meta: 'data/metadata/lottery-brand/', npm: 'npm run test:lottery-brand' },
   { key: 'LotteryDrawMetadata', group: 'Lottery', title: 'Lottery Draw', tab: 'Lottery Draw', colour: 'FFF1C232',
     area: 'Sidebar Lottery Draws > Draws - create draw with ticket DBF + MD5, Review / Approve, scheduled stages, row actions (+ ticket DBF service)', route: '/dashboard/draw',
-    specs: 'tests/e2e/lottery-draw/ + tests/unit/', plan: 'specs/lottery-draw-test-plan.md', meta: 'data/metadata/lottery-draw/', npm: 'npm run test:lottery-draw' },
+    specs: 'tests/e2e/lottery-draw/ + tests/unit/ (+ release: tests/e2e/lottery-draw/checksum/ - planned)', plan: 'specs/lottery-draw-test-plan.md + specs/lottery-draw-checksum-test-plan.md (release: Global Checksum)', meta: 'data/metadata/lottery-draw/ (release: checksum.metadata.ts)', npm: 'npm run test:lottery-draw' },
+];
+/**
+ * Release tracking tabs: a release's scenarios stay in their module tab AND get their own tab here.
+ * They are shown in a separate "Release tracking" table on the Overview, NOT added to the module totals.
+ */
+const RELEASES = [
+  { key: 'LotteryDrawMetadata', filter: (id) => id.startsWith('TC-LD-CHK-'), group: 'Release', title: 'Global Checksum Validation Enhancement', tab: 'Global Checksum', colour: 'FF674EA7',
+    area: 'RELEASE - first upload, approval, Add Tickets in every status, deleted-draw reuse, integrity, concurrency, API, regression (also listed in the Lottery Draw tab)',
+    route: '/dashboard/draw', specs: 'tests/e2e/lottery-draw/checksum/ (planned)', plan: 'specs/lottery-draw-checksum-test-plan.md',
+    meta: 'data/metadata/lottery-draw/checksum.metadata.ts', npm: 'npx playwright test lottery-draw/checksum/ (once automated)' },
 ];
 const CATEGORY = {
   LOGIN: 'Login', NAV: 'Navigation & Display', CR: 'Create', VAL: 'Create Draw Validation', ED: 'Edit', DEL: 'Delete', SRCH: 'Search',
@@ -85,28 +95,43 @@ const CATEGORY = {
 };
 const ORDER = Object.keys(CATEGORY);
 const PRIORITY = { blocker: 'Blocker', critical: 'Critical', normal: 'Normal', minor: 'Minor', trivial: 'Trivial' };
-const STATUS = { AUTO: 'Automated', DEFECT: 'Automated - known defect', TODO: 'Not automated', DESIGN: 'By design' };
+const STATUS = {
+  AUTO: 'Automated', DEFECT: 'Automated - known defect', TODO: 'Not automated', TODO_DEFECT: 'Not automated - known defect', DESIGN: 'By design',
+};
+const CHK_PREFIX = 'Global Checksum - ';
 
+// Release suites (e.g. TC-LD-CHK-*) share one id prefix, so their category is the metadata feature
+// ("Global Checksum - CRT - First upload / draw creation") and the code is "TC-LD-CHK / CRT".
+const isRelease = (m) => (m.feature || '').startsWith(CHK_PREFIX);
 const categoryOf = (id) => {
   const p = id.split('-');
   return p[1] === 'DBF' ? 'DBF' : p[1] === 'LOGIN' ? 'LOGIN' : p[2];
 };
-const codeOf = (id) => {
+function categoryLabel(id, m) {
+  if (isRelease(m)) return `Global Checksum · ${m.feature.slice(CHK_PREFIX.length)}`;
+  return CATEGORY[categoryOf(id)] ?? categoryOf(id);
+}
+function codeOf(id, m) {
+  if (isRelease(m)) return `TC-LD-CHK / ${m.feature.slice(CHK_PREFIX.length).split(' - ')[0]}`;
   const p = id.split('-');
   return p[1] === 'DBF' ? 'TC-DBF' : p[1] === 'LOGIN' ? 'TC-LOGIN' : p.slice(0, 3).join('-');
-};
+}
 function statusOf(id, m) {
   if (automated[id]) return m.actualResult ? STATUS.DEFECT : STATUS.AUTO;
-  return id === 'TC-LB-PAR-001' ? STATUS.DESIGN : STATUS.TODO;
+  if (id === 'TC-LB-PAR-001') return STATUS.DESIGN;
+  return m.actualResult ? STATUS.TODO_DEFECT : STATUS.TODO;
 }
 function noteOf(id, m) {
-  if (m.actualResult) return `Actual: ${m.actualResult}`;
+  const parts = [];
+  if (m.actualResult) parts.push(`Actual: ${m.actualResult}`);
   if (!automated[id]) {
-    if (id === 'TC-LB-PAR-001') return 'Framework rule (unique AT codes, own-data cleanup, --workers=1)';
-    if (id === 'TC-LD-SEC-005') return 'Needs a limited-role account (not available on dev)';
-    return planNote[id] ?? 'Planned';
+    if (id === 'TC-LB-PAR-001') parts.push('Framework rule (unique AT codes, own-data cleanup, --workers=1)');
+    else if (id === 'TC-LD-SEC-005') parts.push('Needs a limited-role account (not available on dev)');
+    else if (planNote[id]) parts.push(planNote[id]);
+    else if (!m.actualResult) parts.push(isRelease(m) ? 'Verified live on dev (exploratory) - automation planned' : 'Planned');
   }
-  return '';
+  if ((m.tags || []).includes('Needs-Confirmation')) parts.push('Business rule needs product confirmation');
+  return parts.join(' | ');
 }
 function testType(m) {
   const tags = (m.tags || []).map((t) => t.toLowerCase());
@@ -126,7 +151,7 @@ const fill = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } }
 const HEAD = { font: { name: FONT, size: 10, bold: true, color: { argb: 'FFFFFFFF' } }, fill: fill('FF990000') };
 const DASH = fill('FFCFE2F3');
 const BANNER = { font: { name: FONT, size: 11, bold: true, color: { argb: 'FF434343' } }, fill: fill('FFF1C232') };
-const STATUS_FILL = { [STATUS.AUTO]: 'FFD9EAD3', [STATUS.DEFECT]: 'FFF4CCCC', [STATUS.TODO]: 'FFFFF2CC', [STATUS.DESIGN]: 'FFEFEFEF' };
+const STATUS_FILL = { [STATUS.AUTO]: 'FFD9EAD3', [STATUS.DEFECT]: 'FFF4CCCC', [STATUS.TODO]: 'FFFFF2CC', [STATUS.TODO_DEFECT]: 'FFF9CB9C', [STATUS.DESIGN]: 'FFEFEFEF' };
 const CENTER = { horizontal: 'center', vertical: 'middle', wrapText: true };
 const LEFT = { horizontal: 'left', vertical: 'middle', wrapText: true };
 
@@ -148,23 +173,29 @@ function merge(ws, r1, c1, r2, c2, value, opts = {}) {
 const f = (formula, result) => ({ formula, result });
 
 // ---- module tab
-const COLS = ['Test Case ID', 'Scenario', 'Priority', 'Test Type', 'Status', 'Automated In', 'Notes'];
+const COLS = ['Test Case ID', 'Category', 'Scenario', 'Priority', 'Test Type', 'Status', 'Automated In', 'Notes'];
+const NCOL = COLS.length;
+const isKnownDefect = (st) => st === STATUS.DEFECT || st === STATUS.TODO_DEFECT;
 function moduleTab(wb, mod) {
-  const coll = metadata[mod.key];
-  const ids = Object.keys(coll).sort((a, b) => ORDER.indexOf(categoryOf(a)) - ORDER.indexOf(categoryOf(b)) || Number(a.split('-').pop()) - Number(b.split('-').pop()));
+  const coll = mod.filter
+    ? Object.fromEntries(Object.entries(metadata[mod.key]).filter(([id]) => mod.filter(id)))
+    : metadata[mod.key];
+  // regular categories in ORDER, then release suites (by id)
+  const rank = (id) => (isRelease(coll[id]) ? 1000 : ORDER.indexOf(categoryOf(id)));
+  const ids = Object.keys(coll).sort((a, b) => rank(a) - rank(b) || Number(a.split('-').pop()) - Number(b.split('-').pop()));
   const groups = new Map();
   for (const id of ids) {
-    const c = codeOf(id);
-    if (!groups.has(c)) groups.set(c, []);
-    groups.get(c).push(id);
+    const c = codeOf(id, coll[id]);
+    if (!groups.has(c)) groups.set(c, { label: categoryLabel(id, coll[id]), ids: [] });
+    groups.get(c).ids.push(id);
   }
   const ws = wb.addWorksheet(mod.tab, { properties: { tabColor: { argb: mod.colour } }, views: [{ zoomScale: 90 }] });
-  [18, 62, 11, 26, 24, 44, 70].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+  [18, 30, 62, 11, 24, 26, 40, 70].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
   merge(ws, 1, 1, 1, 4, `${mod.title} - Test Scenarios`, { font: { name: FONT, size: 14, bold: true }, border: false, align: { vertical: 'middle' } });
   put(ws, 2, 1, 'Generated by "npm run docs:scenarios" from metadata, test files and plans - do not edit by hand. Detailed steps / data / results: test case sheet/BigWin Admin Portal Test Case Sheet.xlsx',
     { font: { name: FONT, size: 9, italic: true }, border: false, align: LEFT });
-  ws.mergeCells(2, 1, 2, 7);
+  ws.mergeCells(2, 1, 2, NCOL);
   const info = [['Group', mod.group], ['Area', mod.area], ['Route', mod.route], ['Specs', mod.specs], ['Metadata', mod.meta], ['Test plan', mod.plan], ['Run', mod.npm]];
   info.forEach(([k, v], i) => {
     put(ws, 4 + i, 1, k, { bold: true, fill: DASH });
@@ -176,23 +207,24 @@ function moduleTab(wb, mod) {
   const tableHead = covHead + 1 + groups.size + 1 + 3;
   const first = tableHead + 1;
   const last = first + ids.length + groups.size - 1;
-  const A = `$A$${first}:$A$${last}`;
-  const E = `$E$${first}:$E$${last}`;
+  const B = `$B$${first}:$B$${last}`;   // Category column
+  const F = `$F$${first}:$F$${last}`;   // Status column
 
-  // coverage by category
+  // coverage by category (COUNTIFS over the Category / Status columns)
   merge(ws, covHead - 1, 1, covHead - 1, 2, 'Coverage by category', { font: { name: FONT, size: 13 }, fill: DASH, align: { vertical: 'middle' } });
   ['Category', 'Category Code', 'Scenarios', 'Automated', 'Known defects', 'Not automated', 'Automation %'].forEach((h, i) =>
     put(ws, covHead, 1 + i, h, { font: { name: 'Calibri', size: 11, bold: true }, fill: DASH }));
   let r = covHead + 1;
-  for (const [code, list] of groups) {
+  for (const [code, g] of groups) {
+    const list = g.ids;
     const auto = list.filter((i) => automated[i]).length;
-    const defects = list.filter((i) => statusOf(i, coll[i]) === STATUS.DEFECT).length;
-    const crit = `"${code}-*"`;
-    put(ws, r, 1, CATEGORY[categoryOf(list[0])] ?? code, { fill: DASH });
+    const defects = list.filter((i) => isKnownDefect(statusOf(i, coll[i]))).length;
+    const crit = `"${g.label}"`;
+    put(ws, r, 1, g.label, { fill: DASH, align: LEFT });
     put(ws, r, 2, code, { fill: DASH });
-    put(ws, r, 3, f(`COUNTIF(${A},${crit})`, list.length), { fill: DASH });
-    put(ws, r, 4, f(`COUNTIFS(${A},${crit},${E},"Automated*")`, auto), { fill: DASH });
-    put(ws, r, 5, f(`COUNTIFS(${A},${crit},${E},"${STATUS.DEFECT}")`, defects), { fill: DASH });
+    put(ws, r, 3, f(`COUNTIF(${B},${crit})`, list.length), { fill: DASH });
+    put(ws, r, 4, f(`COUNTIFS(${B},${crit},${F},"Automated*")`, auto), { fill: DASH });
+    put(ws, r, 5, f(`COUNTIFS(${B},${crit},${F},"*known defect")`, defects), { fill: DASH });
     put(ws, r, 6, f(`C${r}-D${r}`, list.length - auto), { fill: DASH });
     put(ws, r, 7, f(`IFERROR(D${r}/C${r},0)`, auto / list.length), { fill: DASH, numFmt: '0%' });
     r++;
@@ -200,7 +232,7 @@ function moduleTab(wb, mod) {
   const tot = r;
   const n = ids.length;
   const autoN = ids.filter((i) => automated[i]).length;
-  const defN = ids.filter((i) => statusOf(i, coll[i]) === STATUS.DEFECT).length;
+  const defN = ids.filter((i) => isKnownDefect(statusOf(i, coll[i]))).length;
   put(ws, tot, 1, 'Total', { bold: true, fill: DASH });
   put(ws, tot, 2, '', { fill: DASH });
   put(ws, tot, 3, f(`SUM(C${covHead + 1}:C${tot - 1})`, n), { bold: true, fill: DASH });
@@ -208,33 +240,36 @@ function moduleTab(wb, mod) {
   put(ws, tot, 5, f(`SUM(E${covHead + 1}:E${tot - 1})`, defN), { bold: true, fill: DASH });
   put(ws, tot, 6, f(`SUM(F${covHead + 1}:F${tot - 1})`, n - autoN), { bold: true, fill: DASH });
   put(ws, tot, 7, f(`IFERROR(D${tot}/C${tot},0)`, autoN / n), { bold: true, fill: DASH, numFmt: '0%' });
-  put(ws, tot + 1, 1, 'Status: Automated · Automated - known defect (the test fails until the app is fixed, never skipped) · Not automated (planned) · By design',
-    { font: { name: FONT, size: 9, italic: true }, border: false, align: LEFT });
-  ws.mergeCells(tot + 1, 1, tot + 1, 7);
+  put(ws, tot + 1, 1, 'Status: Automated · Automated - known defect (the test fails until the app is fixed, never skipped) · Not automated (planned) · '
+    + 'Not automated - known defect (defect verified live, automation planned) · By design. "Global Checksum ·" categories = release: Global Checksum Validation Enhancement.',
+  { font: { name: FONT, size: 9, italic: true }, border: false, align: LEFT });
+  ws.mergeCells(tot + 1, 1, tot + 1, NCOL);
+  ws.getRow(tot + 1).height = 26;
 
   // scenario table
   COLS.forEach((h, i) => put(ws, tableHead, 1 + i, h, HEAD));
   ws.getRow(tableHead).height = 28;
   r = first;
-  for (const [code, list] of groups) {
-    merge(ws, r, 1, r, 7, `${CATEGORY[categoryOf(list[0])] ?? code}  (${code}-*)  -  ${list.length} scenarios`, BANNER);
+  for (const [code, g] of groups) {
+    merge(ws, r, 1, r, NCOL, `${g.label}  (${code})  -  ${g.ids.length} scenarios`, BANNER);
     r++;
-    for (const id of list) {
+    for (const id of g.ids) {
       const m = coll[id];
       const st = statusOf(id, m);
       put(ws, r, 1, id, { bold: true, fill: fill('FFF3F3F3') });
-      put(ws, r, 2, m.description || m.story, { align: LEFT });
-      put(ws, r, 3, PRIORITY[m.severity] ?? m.severity);
-      put(ws, r, 4, testType(m));
-      put(ws, r, 5, st, { fill: fill(STATUS_FILL[st]) });
-      put(ws, r, 6, automated[id] ?? '-', { align: LEFT, font: { name: FONT, size: 9 } });
-      put(ws, r, 7, noteOf(id, m), { align: LEFT });
+      put(ws, r, 2, g.label, { align: LEFT, font: { name: FONT, size: 9 } });
+      put(ws, r, 3, m.description || m.story, { align: LEFT });
+      put(ws, r, 4, PRIORITY[m.severity] ?? m.severity);
+      put(ws, r, 5, testType(m));
+      put(ws, r, 6, st, { fill: fill(STATUS_FILL[st]) });
+      put(ws, r, 7, automated[id] ?? '-', { align: LEFT, font: { name: FONT, size: 9 } });
+      put(ws, r, 8, noteOf(id, m), { align: LEFT });
       r++;
     }
   }
   ws.views = [{ state: 'frozen', ySplit: tableHead, zoomScale: 90 }];
-  ws.autoFilter = { from: { row: tableHead, column: 1 }, to: { row: last, column: 7 } };
-  ws.dataValidations.add(`E${first}:E${last + 100}`, { type: 'list', allowBlank: true, formulae: [`"${Object.values(STATUS).join(',')}"`] });
+  ws.autoFilter = { from: { row: tableHead, column: 1 }, to: { row: last, column: NCOL } };
+  ws.dataValidations.add(`F${first}:F${last + 100}`, { type: 'list', allowBlank: true, formulae: [`"${Object.values(STATUS).join(',')}"`] });
   return { total: n, auto: autoN, defects: defN, tot };
 }
 
@@ -245,6 +280,7 @@ async function main() {
   wb.calcProperties = { fullCalcOnLoad: true };
   const ov = wb.addWorksheet('Overview', { properties: { tabColor: { argb: 'FF990000' } } });
   const stats = MODULES.map((mod) => ({ mod, ...moduleTab(wb, mod) }));
+  const releases = RELEASES.map((mod) => ({ mod, ...moduleTab(wb, mod) }));
 
   [14, 18, 14, 14, 14, 16, 16, 60].forEach((w, i) => { ov.getColumn(i + 1).width = w; });
   merge(ov, 1, 1, 1, 5, 'BigWin Admin Portal - Test Scenarios', { font: { name: FONT, size: 16, bold: true }, border: false, align: { vertical: 'middle' } });
@@ -276,13 +312,35 @@ async function main() {
   put(ov, r, 6, f(`SUM(F6:F${r - 1})`, sum('total') - sum('auto')), { bold: true, fill: DASH });
   put(ov, r, 7, f(`IFERROR(D${r}/C${r},0)`, sum('auto') / sum('total')), { bold: true, fill: DASH, numFmt: '0%' });
   put(ov, r, 8, '', { fill: DASH });
-  put(ov, r + 2, 1, 'Groups: Login (green tab) · Lottery = Lottery Type, Lottery Brand, Lottery Draw (yellow tabs). Adding a module: add its metadata folder, then one entry to MODULES in scripts/generate-test-scenarios.js.',
-    { font: { name: FONT, size: 9, italic: true }, border: false, align: LEFT });
-  ov.mergeCells(r + 2, 1, r + 2, 8);
+
+  // release tracking (already counted inside their module above - not added to the totals)
+  r += 2;
+  merge(ov, r, 1, r, 8, 'Release tracking (these scenarios are also inside their module tab - not added to the totals above)',
+    { font: { name: FONT, size: 11, bold: true, color: { argb: 'FFFFFFFF' } }, fill: fill('FF674EA7'), align: { vertical: 'middle', horizontal: 'left' } });
+  r++;
+  ['Group', 'Release', 'Scenarios', 'Automated', 'Known defects', 'Not automated', 'Automation %', 'Open the tab'].forEach((h, i) => put(ov, r, 1 + i, h, HEAD));
+  r++;
+  for (const s of releases) {
+    const t = `'${s.mod.tab}'!`;
+    put(ov, r, 1, s.mod.group, { bold: true, fill: fill(s.mod.colour), font: { name: FONT, size: 10, bold: true, color: { argb: 'FFFFFFFF' } } });
+    put(ov, r, 2, s.mod.title);
+    put(ov, r, 3, f(`${t}C${s.tot}`, s.total));
+    put(ov, r, 4, f(`${t}D${s.tot}`, s.auto));
+    put(ov, r, 5, f(`${t}E${s.tot}`, s.defects));
+    put(ov, r, 6, f(`${t}F${s.tot}`, s.total - s.auto));
+    put(ov, r, 7, f(`IFERROR(D${r}/C${r},0)`, s.auto / s.total), { numFmt: '0%' });
+    put(ov, r, 8, { text: `Go to ${s.mod.tab}`, hyperlink: `#'${s.mod.tab}'!A1` }, { font: { name: FONT, size: 10, color: { argb: 'FF1155CC' }, underline: true } });
+    r++;
+  }
+  put(ov, r + 1, 1, 'Groups: Login (green tab) · Lottery = Lottery Type, Lottery Brand, Lottery Draw (yellow tabs) · Release tracking (purple tabs). '
+    + 'Adding a module: add its metadata folder, then one entry to MODULES; a release: one entry to RELEASES in scripts/generate-test-scenarios.js.',
+  { font: { name: FONT, size: 9, italic: true }, border: false, align: LEFT });
+  ov.mergeCells(r + 1, 1, r + 1, 8);
+  ov.getRow(r + 1).height = 26;
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   await wb.xlsx.writeFile(OUT);
-  for (const s of stats) console.log(`✅ ${s.mod.tab}: ${s.total} scenarios, ${s.auto} automated, ${s.defects} known defects`);
+  for (const s of [...stats, ...releases]) console.log(`✅ ${s.mod.tab}: ${s.total} scenarios, ${s.auto} automated, ${s.defects} known defects`);
   console.log(`✅ ${path.relative(ROOT, OUT)} - ${sum('total')} scenarios in ${stats.length} modules`);
 }
 

@@ -14,6 +14,7 @@ import { LotteryDrawActionsMetadata } from './actions.metadata';
 import { LotteryDrawValidationMetadata } from './validation.metadata';
 import { LotteryDrawSecurityMetadata } from './security.metadata';
 import { TicketDbfMetadata } from './ticket-dbf.metadata';
+import { LotteryDrawChecksumMetadata } from './checksum.metadata';
 
 export const LotteryDrawMetadata: TestMetadataCollection = {
   ...LotteryDrawNavMetadata,
@@ -27,6 +28,7 @@ export const LotteryDrawMetadata: TestMetadataCollection = {
   ...LotteryDrawValidationMetadata,
   ...LotteryDrawSecurityMetadata,
   ...TicketDbfMetadata,
+  ...LotteryDrawChecksumMetadata, // release: Global Checksum Validation Enhancement (TC-LD-CHK-*)
 };
 
 export function registerLotteryDrawMetadata(): void {
@@ -34,5 +36,5 @@ export function registerLotteryDrawMetadata(): void {
   console.log(`✅ Registered ${Object.keys(LotteryDrawMetadata).length} Lottery Draws (+ ticket DBF service) metadata entries`);
 }
 
-export { LotteryDrawNavMetadata, LotteryDrawCreateMetadata, LotteryDrawApprovalMetadata, LotteryDrawLifecycleMetadata, LotteryDrawSearchMetadata, LotteryDrawTableMetadata, LotteryDrawViewMetadata, LotteryDrawActionsMetadata, LotteryDrawValidationMetadata, LotteryDrawSecurityMetadata, TicketDbfMetadata };
+export { LotteryDrawNavMetadata, LotteryDrawCreateMetadata, LotteryDrawApprovalMetadata, LotteryDrawLifecycleMetadata, LotteryDrawSearchMetadata, LotteryDrawTableMetadata, LotteryDrawViewMetadata, LotteryDrawActionsMetadata, LotteryDrawValidationMetadata, LotteryDrawSecurityMetadata, TicketDbfMetadata, LotteryDrawChecksumMetadata };
 export * from './base';
