@@ -1,4 +1,4 @@
-import { Page, Locator, Response, expect } from '@playwright/test';
+import { Page, Locator, Response, expect, Dialog } from '@playwright/test';
 import { BasePage } from '../base.page';
 import { TableComponent } from '../../components/table.component';
 import { SearchComponent } from '../../components/search.component';
@@ -13,7 +13,7 @@ export type DrawColumn = 'Draw Code' | 'Lottery Name' | 'Draw Number' | 'Status'
 
 /** Row-menu actions. Review/Reject and Approve/Reject share one menu item, so they are separate buttons. */
 export type DrawAction = 'View' | 'Edit' | 'Add Tickets' | 'Quick Settings' | 'Review Draw' | 'Approve Draw' | 'Reject Draw' | 'Reject' | 'Hold Draw'
-  | 'Activate Draw' | 'Remove Draw';
+  | 'Activate Draw' | 'Remove Draw' | 'Delete';
 
 export interface DrawRow {
   code: string;
@@ -176,6 +176,47 @@ export class LotteryDrawListPage extends BasePage {
     await this.menuAction('Add Tickets').click();
   }
 
+  /** Add Tickets dialog 1: "Upload Files" (Browse files, Cancel, Add). */
+  uploadFilesDialog(): Locator { return this.page.getByRole('dialog').filter({ hasText: 'Upload Files' }); }
+  /** Add Tickets dialog 2: titled "Add Ticktes" (sic) - MD5 Checksum, Initiate Now, Scheduled At, Cancel, Create. */
+  addTicketsDialog(): Locator { return this.page.getByRole('dialog').filter({ hasText: /Add Tick/ }).filter({ has: this.page.getByRole('textbox', { name: /MD5/ }) }); }
+  addTicketsMd5Input(): Locator { return this.addTicketsDialog().getByRole('textbox', { name: /MD5/ }); }
+  addTicketsInitiateNow(): Locator { return this.addTicketsDialog().getByRole('checkbox', { name: /Initiate Now/ }); }
+  addTicketsCreateButton(): Locator { return this.addTicketsDialog().getByRole('button', { name: 'Create', exact: true }); }
+
+  /**
+   * Row menu "Add Tickets": upload `filePath`, type `md5`, tick Initiate Now, Create.
+   * Returns the ticket-service ticket-upload response (201 accepted / 400 refused / 404 unknown draw),
+   * or null when no request was sent (e.g. empty MD5 - the dialog stays open).
+   * Set `inTab` to search the draw in another tab first (e.g. the Deleted tab).
+   */
+  async addTickets(code: string, filePath: string, md5: string, inTab?: DrawTab): Promise<Response | null> {
+    await this.selectTab(inTab ?? 'All');   // the draw is searched in this tab (default: All)
+    await this.openAddTickets(code);
+    await expect(this.uploadFilesDialog(), '"Upload Files" dialog should open').toBeVisible();
+    await this.page.locator('input[type="file"]').setInputFiles(filePath);   // hidden file input - documented exception
+    await this.uploadFilesDialog().getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(this.addTicketsMd5Input(), 'The checksum dialog should open after "Add"').toBeVisible({ timeout: SERVER_SAVE_TIMEOUT });
+    await this.addTicketsMd5Input().fill(md5);
+    if (!(await this.addTicketsInitiateNow().isChecked())) await this.addTicketsInitiateNow().check();
+    const upload = this.page
+      .waitForResponse((r) => /ticket-upload(\?|$)/.test(r.url()) && r.request().method() === 'POST', { timeout: 30000 })
+      .catch(() => null);
+    await this.addTicketsCreateButton().click();
+    const response = await upload;
+    this.logger.info(`📎 Add Tickets ${code} (${filePath.split(/[\\/]/).pop()}): ${response ? `HTTP ${response.status()}` : 'no request sent'}`);
+    if (!response) return null;
+    await this.addTicketsDialog().waitFor({ state: 'hidden', timeout: 15000 }).catch(() => undefined);   // a refused upload may keep it open
+    return response;
+  }
+
+  /** Rejected tab: row menu "Delete" (no confirmation) -> DELETE ticket-service lottery-draw/{id}. */
+  async deleteRejectedDraw(code: string): Promise<Response> {
+    await this.selectTab('Rejected');
+    await this.findDraw(code);
+    return this.performRowAction(code, 'Delete', LotteryDrawListPage.API.REMOVE);
+  }
+
   processLogsDialog(): Locator { return this.page.getByRole('dialog', { name: 'Process Logs' }); }
   processLogsColumn(name: string): Locator { return this.processLogsDialog().getByRole('columnheader', { name, exact: true }); }
   processLogsNextPage(): Locator { return this.processLogsDialog().getByRole('button', { name: /next page|go to next|^next$/i }); }
@@ -204,7 +245,12 @@ export class LotteryDrawListPage extends BasePage {
   }
 
   async open(): Promise<void> {
-    await this.page.goto(LotteryDrawListPage.PATH);
+    // a Hold / Activate / Approve reloads the page itself; a goto racing that reload is aborted -> wait and go again
+    await this.page.goto(LotteryDrawListPage.PATH).catch(async (error: Error) => {
+      if (!/ERR_ABORTED|interrupted by another navigation/.test(error.message)) throw error;
+      await this.page.waitForLoadState('load');
+      await this.page.goto(LotteryDrawListPage.PATH);
+    });
     await this.verifyPageLoaded();
   }
 
@@ -390,7 +436,8 @@ export class LotteryDrawListPage extends BasePage {
       return null;
     }
     const res = this.page.waitForResponse((r) => /\/api\/draw\/(approve-)?reject\//.test(r.url()) && r.request().method() !== 'GET', { timeout: SERVER_SAVE_TIMEOUT }).catch(() => null);
-    this.page.once('dialog', (d) => void d.accept());
+    const acceptConfirm = (d: Dialog) => void d.accept();
+    this.page.once('dialog', acceptConfirm);   // removed below, so it can never swallow a later confirm (e.g. Create Draw "Next")
     await this.menuAction(label).click();
     const dialog = this.page.getByRole('dialog');
     if (await dialog.isVisible().catch(() => false)) {
@@ -399,6 +446,7 @@ export class LotteryDrawListPage extends BasePage {
       await dialog.getByRole('button', { name: /^(reject|confirm|yes|submit|ok)/i }).last().click();
     }
     const response = await res;
+    this.page.off('dialog', acceptConfirm);
     this.logger.info(`🚫 Reject draw ${code}: HTTP ${response?.status() ?? 'no request seen'}`);
     return response;
   }
