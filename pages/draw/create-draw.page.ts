@@ -146,7 +146,15 @@ export class CreateDrawPage extends BasePage {
   }
 
   async open(): Promise<void> {
+    // Wait for the brand list before choosing a brand: choosing one before GET /api/lottery/brands/simple has
+    // answered leaves the draw's lotteryBrandId at 0 and Create Draw then fails with 400 "Error occured while
+    // creating draw with code ..." (found 2026-11-23 - this was the "intermittent" create-draw failure).
+    const brandList = this.page
+      .waitForResponse((r) => /\/brands\/simple/.test(r.url()) && r.request().method() === 'GET', { timeout: 30000 })
+      .catch(() => null);
     await this.page.goto(CreateDrawPage.PATH);
+    await brandList;
+    await this.page.waitForLoadState('load');
     await expect(this.heading, '"Create Draw" heading should be visible').toBeVisible({ timeout: 30000 });
     await expect(this.brandSelect, '"Lottery Brand" select should be visible').toBeVisible();
   }
@@ -160,6 +168,34 @@ export class CreateDrawPage extends BasePage {
     await this.page.keyboard.press('Escape');
     await expect(options).toHaveCount(0);
     return names;
+  }
+
+  /**
+   * Mega Prize hotfix (2026-11-23): put `text` on the clipboard and paste it into Mega Prize with Ctrl+V,
+   * the way users copy an amount from another place. `replace` (default) empties the box first; otherwise the
+   * text is pasted at the end of the current value. Needs the clipboard permissions (spec: test.use({ permissions })).
+   */
+  async pasteIntoMegaPrize(text: string, { replace = true } = {}): Promise<string> {
+    await this.page.evaluate((t) => navigator.clipboard.writeText(t), text);
+    if (replace) await this.megaPrizeInput.clear();
+    await this.megaPrizeInput.focus();
+    await this.megaPrizeInput.press('End');
+    await this.page.keyboard.press('ControlOrMeta+V');
+    return this.megaPrizeInput.inputValue();
+  }
+
+  /** Select the whole Mega Prize value and copy it (Ctrl+C); returns what landed on the clipboard. */
+  async copyMegaPrize(): Promise<string> {
+    await this.megaPrizeInput.selectText();
+    await this.page.keyboard.press('ControlOrMeta+C');
+    return this.page.evaluate(() => navigator.clipboard.readText());
+  }
+
+  /** Clear Mega Prize and type `text` key by key; returns the value the box kept. */
+  async typeMegaPrize(text: string): Promise<string> {
+    await this.megaPrizeInput.clear();
+    await this.megaPrizeInput.pressSequentially(text);
+    return this.megaPrizeInput.inputValue();
   }
 
   async selectBrand(name: string): Promise<void> {

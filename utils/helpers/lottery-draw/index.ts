@@ -4,3 +4,4 @@ export * from './draw.helpers';
 export * from '../common/toast.helpers';
 export * from './list.helpers';
 export * from './checksum.helpers';
+export * from './mega-prize.helpers';

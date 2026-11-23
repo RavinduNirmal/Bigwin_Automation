@@ -96,6 +96,13 @@ export class LotteryDrawDetailPage extends BasePage {
     await this.verifyLoaded();
   }
 
+  /** The saved Mega Prize as shown on the draw page (waits for the draw data - the page first renders empty fields). */
+  async readMegaPrize(code: string): Promise<string> {
+    await this.verifyLoaded(code);
+    await expect(this.megaPrizeField, 'Mega Prize should be filled in from the saved draw').not.toHaveValue('', { timeout: 30000 });
+    return this.megaPrizeField.inputValue();
+  }
+
   async verifyLoaded(code?: string): Promise<void> {
     await expect(this.approvalStageField, 'Draw page should show the Approval Stage').toBeVisible({ timeout: 30000 });
     if (code) await expect(this.heading()).toContainText(`${code} |`);

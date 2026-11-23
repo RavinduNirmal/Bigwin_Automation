@@ -41,6 +41,8 @@
     "test:lottery-draw:security": "npx playwright test lottery-draw/lottery_draw_security.spec.ts",
     "test:lottery-draw:lifecycle": "npx playwright test lottery-draw/lottery_draw_lifecycle.spec.ts --workers=1",
     "test:lottery-draw:demo": "npx playwright test lottery-draw/lottery_draw_demo.spec.ts --workers=1 --headed",
+    "test:hotfix": "npx playwright test tests/hotfix --workers=1",
+    "test:hotfix:mega-prize": "npx playwright test tests/hotfix -g TC-HF-MP --workers=1",
     "test:smoke:checksum": "npx playwright test tests/smoke/lottery-draw/global_checksum.spec.ts --workers=1",
     "test:smoke:checksum:fast": "npx playwright test tests/smoke/lottery-draw/global_checksum.spec.ts --grep-invert @slow --workers=1",
     "test:smoke:checksum:headed": "npx playwright test tests/smoke/lottery-draw/global_checksum.spec.ts --workers=1 --headed",

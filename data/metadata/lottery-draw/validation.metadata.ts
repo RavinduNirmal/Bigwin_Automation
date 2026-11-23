@@ -82,10 +82,10 @@ export const LotteryDrawValidationMetadata = drawCases('Create Draw Validation',
   },
   'TC-LD-VAL-011': {
     story: 'Mega Prize', severity: 'normal', tags: ['Regression', 'Validation'],
-    description: 'Mega Prize accepts digits only',
+    description: 'Mega Prize accepts digits and cents only (cents allowed since the 2026-11-23 hotfix - see TC-HF-MP-*)',
     preconditions: P.CREATE, testData: '"abc", "1000.55"',
     steps: ['Type each value into Mega Prize'],
-    expectedResult: 'Letters and "." are not accepted into the box',
+    expectedResult: 'Letters are not accepted; 1000 then .55 gives 1000.55 (cents accepted)',
   },
   'TC-LD-VAL-012': {
     story: 'Mega Prize', severity: 'normal', tags: ['Regression', 'Validation'],

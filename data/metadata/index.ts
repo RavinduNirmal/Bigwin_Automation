@@ -1,6 +1,6 @@
 /**
  * Central registry of ALL Allure metadata, keyed by test id (TC-...). Metadata lives in one folder
- * per module (login/, lottery-type/, lottery-brand/, lottery-draw/), each with its own index.ts and
+ * per module (login/, lottery-type/, lottery-brand/, lottery-draw/, hotfix/), each with its own index.ts and
  * register<Module>Metadata(). Specs register their own module; registerAllMetadata() loads everything
  * (used by tools / agents). New metadata file -> add it to its module's index.ts.
  */
@@ -9,17 +9,20 @@ import { LoginMetadata } from './login';
 import { LotteryTypeMetadata } from './lottery-type';
 import { LotteryBrandMetadata } from './lottery-brand';
 import { LotteryDrawMetadata } from './lottery-draw';
+import { HotfixMetadata } from './hotfix';
 
 export * from './login';
 export * from './lottery-type';
 export * from './lottery-brand';
 export * from './lottery-draw';
+export * from './hotfix';
 
 export const AllTestMetadata = {
   ...LoginMetadata,
   ...LotteryTypeMetadata,
   ...LotteryBrandMetadata,
   ...LotteryDrawMetadata,
+  ...HotfixMetadata,
 };
 
 export function registerAllMetadata(): void {
