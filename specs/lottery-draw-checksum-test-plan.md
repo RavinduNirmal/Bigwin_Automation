@@ -16,7 +16,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 1.1. TC-LD-CHK-001: [TC01] New draw + new DBF + new checksum is created and Under Review [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: happy path of the first upload - nothing is registered yet. Priority: Blocker. Preconditions: logged in; F10 has no non-deleted holder. Test Data: draw 9032985510 / AT9032985510, file base/9032985510.dbf (F10), md5 27521613fe004cd989dd46c832622346, far-future dates (2028-01-08 / 01-10 / 01-10 12:00), mega prize 1000000.
@@ -32,7 +32,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 1.2. TC-LD-CHK-002: [TC02] New draw whose DBF carries a checksum already used by another non-deleted draw fails the global checksum check [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: global duplicate check at first upload. Priority: Blocker. Preconditions: holder draw AT9032985510 (F10, Under Review, NOT deleted). Test Data: second draw 9032985521 / AT9032985521 with copy/9032985510_COPY.dbf (F10-COPY, different name, byte-identical = same md5 27521613fe004cd989dd46c832622346). NOTE: F11 with F10's md5 only gives the 'does not match the ticket file' message (see 067) - that is NOT the global check.
@@ -120,7 +120,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 2.1. TC-LD-CHK-008: [TC04] Under Review draw with new DBF + new checksum is approved [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: approval happy path. Priority: Blocker. Preconditions: own draw Under Review with 100 tickets loaded. Test Data: draw 9032985511 / AT9032985511 + F11 (base/9032985511.dbf, md5 83230a30512dde49dd35ba4580ce2eea), far-future.
@@ -133,7 +133,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 2.2. TC-LD-CHK-009: [TC05] Approval with a checksum that belongs to another non-deleted draw is rejected and the draw stays Pending Approval [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: approval refuses a foreign checksum. Priority: Blocker. Preconditions: draw A (9032985520, F10-MOD, Pending Approval) and draw B holder (9032985510, F10, not deleted). Test Data: md5 of B = 27521613fe004cd989dd46c832622346 typed into A's Approve dialog.
@@ -173,7 +173,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 2.5. TC-LD-CHK-012: A failed approval neither reserves nor releases a checksum [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: failed approval leaves the global registration unchanged. Priority: Critical. Preconditions: holder B (9032985510, F10) and A (9032985520, F10-MOD) Pending Approval. Test Data: B md5, A md5 2ac55e6bdaf2e4fdf9d802faf5ff7948.
@@ -239,7 +239,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 3.1. TC-LD-CHK-017: [TC06] Add Tickets: existing DBF (same barcodes) + new checksum [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: DBF duplication independent from checksum. Priority: Critical. Preconditions: Under Review draw 9032985511 already loaded with F11 (100 tickets, upload Completed). Test Data: modified/9032985511.dbf (F11-MOD, md5 3490b490a8c329aff9dc979910df97eb).
@@ -253,7 +253,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 3.2. TC-LD-CHK-018: [TC07] Add Tickets: new DBF + new checksum [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: normal additional upload. Priority: Blocker. Preconditions: Under Review draw 9032985512 with F12. Test Data: additional/9032985512_ADD.dbf (A12, 50 tickets, md5 8d2660220fbfadbdf15b6b04af7e3b87).
@@ -265,7 +265,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 3.3. TC-LD-CHK-019: [TC08] Add Tickets: new DBF + checksum used by another non-deleted draw is rejected [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: global check on additional upload. Priority: Blocker. Preconditions: holder 9032985510 (F10) non-deleted; target 9032985512 Under Review. Test Data: F10-COPY + md5 27521613fe004cd989dd46c832622346.
@@ -345,7 +345,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 4.2. TC-LD-CHK-025: [TC11] New DBF + checksum used ONLY by a deleted draw is reusable [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: the core enhancement. Priority: Blocker. Preconditions: draw X (9032985510, F10) created then deleted (Hold Draw > Remove Draw, type AT9032985510); draw Y (9032985521) empty. Test Data: F10-COPY, md5 27521613fe004cd989dd46c832622346.
@@ -370,7 +370,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 4.4. TC-LD-CHK-027: [TC13] Existing DBF + existing checksum belonging only to a deleted draw: recreate with the exact same DBF, draw number and code [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: delete-and-recreate. Priority: Blocker. Preconditions: AT9032985510 (F10) created and deleted. Test Data: base/9032985510.dbf, md5 27521613..., same number 9032985510, same code AT9032985510, same dates.
@@ -395,7 +395,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 4.6. TC-LD-CHK-029: Checksum stays protected while its draw is On Hold (held, not deleted) [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: only deletion releases. Priority: Critical. Preconditions: holder 9032985510 (F10). Test Data: F10-COPY on 9032985511.
@@ -407,7 +407,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 4.7. TC-LD-CHK-030: Checksum stays protected after the holder is Rejected (not deleted) [Verified live 2026-11-23 - automated smoke] [Expected result confirmed by product 2026-11-23]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: a rejected (but not deleted) draw is 'non-deleted'. Priority: Critical. Preconditions: holder (F10) rejected (Reject Draw -> Rejected tab). Test Data: F10-COPY on a second draw.
@@ -443,7 +443,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 4.10. TC-LD-CHK-033: Deleting a draw with several DBFs releases ALL its checksums [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: multi-DBF draw. Priority: Critical. Preconditions: draw 9032985513 with F13 and A15 (additional/9032985515_ADD.dbf md5 5dd64e1205ba2266a77f99468c5c6b7c, both Completed, 150 tickets). Test Data: target draw 9032985510.
@@ -455,7 +455,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 4.11. TC-LD-CHK-034: Deleting an Approved draw (Hold then Remove) releases its checksums [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: delete from Approved. Priority: Critical. Preconditions: Approved draw 9032985520 (F10-MOD + A12). Test Data: A12 md5 8d2660220fbfadbdf15b6b04af7e3b87 to another draw.
@@ -560,7 +560,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 5.3. TC-LD-CHK-042: [TC15] Approved draw: new DBF + existing checksum is rejected [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: global check on Approved draws. Priority: Blocker. Preconditions: Approved draw; holder 9032985510 (F10). Test Data: F10-COPY.
@@ -638,7 +638,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 6.3. TC-LD-CHK-048: [TC19] In Play: new DBF + existing checksum is rejected [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: global check while In Play. Priority: Blocker. Preconditions: In Play draw; holder 9032985510 (F10). Test Data: F10-COPY.
@@ -703,7 +703,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 7.3. TC-LD-CHK-053: [TC23] Post Cutoff: new DBF + existing checksum is rejected [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: global check after cutoff. Priority: Blocker. Preconditions: Post Cutoff draw; holder 9032985511 or 9032985510. Test Data: F10-COPY (or F11).
@@ -892,7 +892,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 9.2. TC-LD-CHK-068: Modified content with the OLD checksum is rejected [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: server recomputes md5. Priority: Blocker. Preconditions: live draw. Test Data: modified/9032985510.dbf with F10's md5 27521613fe004cd989dd46c832622346 (also create-draw variant: base/9032985511.dbf with F10's md5).
@@ -1118,7 +1118,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 11.1. TC-LD-CHK-086: Direct API call cannot bypass the global checksum check [Verified live]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: validation is server-side. Priority: Blocker. Preconditions: holder draw with F10 (non-deleted), target draw T. Test Data: S3 url of an already uploaded F10 file (read from the ticket-upload request of the holder), token from localStorage 'accesstoken' + header x-sales-channel-access-token captured from a live request.
@@ -1415,7 +1415,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 13.3. TC-LD-CHK-114: Completed draw does not allow adding tickets and still protects its ticket file [DEFECT] [Verified live 2026-11-23 - automated smoke] [Expected result per product 2026-11-23: a Completed draw must not accept Add Tickets]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: after the draw is Completed no ticket file may be added, and its own checksum stays protected (Completed is a non-deleted status). Priority: Critical. Preconditions: none. Test Data: draw 9032985518 / AT9032985518 with base/9032985518.dbf md5 7a4bb71296b5bdb8bad393dfdefe77de; additional file additional/9032985517_ADD.dbf; a byte-identical renamed copy of F18; schedule start +3 min, cutoff +5 min, draw +7 min.
@@ -1430,7 +1430,7 @@ DEFECTS / FINDINGS OBSERVED (each has its own scenario): [F1] failed upload at c
 
 #### 13.4. TC-LD-CHK-115: Pending Approval draw still protects its ticket file [Verified live 2026-11-23 - automated smoke] [Expected result confirmed by product 2026-11-23]
 
-**File:** `tests/smoke/lottery-draw/global_checksum.spec.ts`
+**File:** `tests/e2e/lottery-draw/lottery_draw_checksum.spec.ts`
 
 **Steps:**
   1. [Meta] Objective: Pending Approval is a non-deleted status and must keep its checksum. Priority: Critical. Preconditions: none. Test Data: draw 9032985511 / AT9032985511 with base/9032985511.dbf md5 83230a30512dde49dd35ba4580ce2eea and a byte-identical renamed copy.

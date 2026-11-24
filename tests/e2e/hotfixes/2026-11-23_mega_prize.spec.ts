@@ -1,16 +1,16 @@
 import { mergeTests } from '@playwright/test';
-import { test, expect } from '../../fixtures/auth.fixture';
-import { test as drawDataTest } from '../../fixtures/lottery-draw-data.fixture';
-import { TestHelper } from '../../utils/helpers/common';
-import { registerHotfixMetadata } from '../../data/metadata/hotfix';
-import { CreateDrawPage } from '../../pages/draw/create-draw.page';
+import { test, expect } from '../../../fixtures/auth.fixture';
+import { test as drawDataTest } from '../../../fixtures/lottery-draw-data.fixture';
+import { TestHelper } from '../../../utils/helpers/common';
+import { registerHotfixMetadata } from '../../../data/metadata/hotfix';
+import { CreateDrawPage } from '../../../pages/draw/create-draw.page';
 import {
   MEGA_PRIZE_FORMAT,
   createDrawWithMegaPrize,
   deleteOwnDraws,
   reviewAndApprove,
   waitForTicketsLoaded,
-} from '../../utils/helpers/lottery-draw';
+} from '../../../utils/helpers/lottery-draw';
 
 registerHotfixMetadata();
 

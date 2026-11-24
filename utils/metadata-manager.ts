@@ -1,5 +1,14 @@
 // utils/metadata-manager.ts
 import { AllureHelpers } from './allure-helpers';
+import { suitesOf, suiteTag } from '../config/test-suites';
+
+/** Suite tags written by hand in old metadata - replaced by the real membership from config/test-suites.json. */
+const LEGACY_SUITE_TAGS = new Set(['Smoke', 'Regression']);
+
+/** Allure tags of a test: its metadata tags + the suites it belongs to (e.g. "Smoke-Suite", "Focused-Regression"). */
+export function allureTags(testId: string, tags: string[]): string[] {
+  return [...tags.filter((t) => !LEGACY_SUITE_TAGS.has(t)), ...suitesOf(testId).map(suiteTag)];
+}
 
 export interface TestMetadata {
   epic: string;
@@ -69,7 +78,7 @@ export class TestMetadataManager {
       feature: metadata.feature,
       story: metadata.story,
       severity: metadata.severity,
-      tags: metadata.tags,
+      tags: allureTags(testId, metadata.tags),
       owner: metadata.owner,
       issue: metadata.issue,
       tms: metadata.tms,

@@ -29,16 +29,17 @@ registerLotteryDrawMetadata();
 const combinedTest = mergeTests(test, drawDataTest);
 combinedTest.describe.configure({ mode: 'default', timeout: 15 * 60 * 1000 });
 
-const SMOKE = { tag: ['@smoke', '@checksum'] };
-const SMOKE_SLOW = { tag: ['@smoke', '@checksum', '@slow'] };
+// Suite membership (smoke / regression) is NOT a tag: it lives in config/test-suites.json.
+const CHECKSUM = { tag: ['@checksum'] };
+const CHECKSUM_SLOW = { tag: ['@checksum', '@slow'] };
 const SLOW_TIMEOUT = 45 * 60 * 1000;
 
 /**
- * Global Checksum Validation smoke suite: a ticket file checksum (MD5) may be held by only ONE
+ * Global Checksum Validation (release 2026-11, automated cases): a ticket file checksum (MD5) may be held by only ONE
  * non-deleted draw; deleting the draw frees it. Every test builds fresh files and its own "AT9..." draws,
  * and afterEach DELETES them (a live draw would keep its checksum).
  */
-combinedTest.describe('Global Checksum Validation - Smoke', () => {
+combinedTest.describe('Global Checksum Validation', () => {
   combinedTest.beforeEach(async ({ authenticatedPage, lotteryDrawListPage }) => {
     void authenticatedPage;
     CreateDrawPage.submittedCodes.length = 0;
@@ -50,7 +51,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     CreateDrawPage.submittedCodes.length = 0;
   });
 
-  combinedTest('TC-LD-CHK-001: Create a new draw with a brand-new ticket file', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-001: Create a new draw with a brand-new ticket file', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-001', page);
     const draw = data.unique();
     const file = data.ticketFile(draw);
@@ -62,7 +63,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('New file accepted, draw Under Review with 100 tickets');
   });
 
-  combinedTest('TC-LD-CHK-002: Creating a draw with a file already used by another (not deleted) draw is refused', SMOKE, async ({ page, lotteryDrawListPage: list, lotteryDrawDetailPage: detail, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-002: Creating a draw with a file already used by another (not deleted) draw is refused', CHECKSUM, async ({ page, lotteryDrawListPage: list, lotteryDrawDetailPage: detail, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-002', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);
@@ -75,7 +76,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Copy of a used file refused on create');
   });
 
-  combinedTest('TC-LD-CHK-008: Approve a draw that has a new ticket file', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-008: Approve a draw that has a new ticket file', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-008', page);
     const draw = data.unique();
     const file = data.ticketFile(draw);
@@ -85,7 +86,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Approved with own checksum');
   });
 
-  combinedTest('TC-LD-CHK-009: Approving with the checksum of another draw\'s file is refused', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-009: Approving with the checksum of another draw\'s file is refused', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-009', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);
@@ -104,7 +105,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Foreign checksum refused at approval');
   });
 
-  combinedTest('TC-LD-CHK-012: A refused approval neither takes nor frees any checksum', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-012: A refused approval neither takes nor frees any checksum', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-012', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);
@@ -129,7 +130,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Failed approval changed nothing');
   });
 
-  combinedTest('TC-LD-CHK-017: Add a file with the same tickets but changed content (new checksum) to an Under Review draw', SMOKE, async ({ page, lotteryDrawListPage: list, lotteryDrawDetailPage: detail, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-017: Add a file with the same tickets but changed content (new checksum) to an Under Review draw', CHECKSUM, async ({ page, lotteryDrawListPage: list, lotteryDrawDetailPage: detail, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-017', page);
     const draw = data.unique();
     const file = data.ticketFile(draw);
@@ -143,7 +144,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Accepted at upload, duplicates rejected in processing');
   });
 
-  combinedTest('TC-LD-CHK-018: Add a new file (new tickets, new checksum) to an Under Review draw', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-018: Add a new file (new tickets, new checksum) to an Under Review draw', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-018', page);
     const draw = data.unique();
     await createHolderDraw(createDrawPage, list, draw, data.ticketFile(draw));
@@ -155,7 +156,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('150 tickets');
   });
 
-  combinedTest('TC-LD-CHK-019: Adding a file already used by another live draw is refused', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-019: Adding a file already used by another live draw is refused', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-019', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);
@@ -170,7 +171,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Add Tickets refused, draw unchanged');
   });
 
-  combinedTest('TC-LD-CHK-025: THE FIX: a file used only by a deleted draw can be used again', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-025: THE FIX: a file used only by a deleted draw can be used again', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-025', page);
     const x = data.unique();
     const xFile = data.ticketFile(x);
@@ -187,7 +188,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('File reusable after delete');
   });
 
-  combinedTest('TC-LD-CHK-027: Re-create a deleted draw with exactly the same file, number and code', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-027: Re-create a deleted draw with exactly the same file, number and code', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-027', page);
     const draw = data.unique();
     const file = data.ticketFile(draw);
@@ -201,7 +202,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Deleted draw re-created');
   });
 
-  combinedTest('TC-LD-CHK-029: A draw that is only On Hold still protects its file', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-029: A draw that is only On Hold still protects its file', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-029', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);
@@ -220,7 +221,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('On Hold keeps the checksum');
   });
 
-  combinedTest('TC-LD-CHK-030: A Rejected (not deleted) draw still protects its file', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-030: A Rejected (not deleted) draw still protects its file', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-030', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);
@@ -236,7 +237,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Rejected keeps the checksum');
   });
 
-  combinedTest('TC-LD-CHK-033: Deleting a draw with several files frees ALL its files', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-033: Deleting a draw with several files frees ALL its files', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-033', page);
     const multi = data.unique();
     const file1 = data.ticketFile(multi);
@@ -261,7 +262,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Both files freed');
   });
 
-  combinedTest('TC-LD-CHK-034: Deleting an Approved draw frees its files', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-034: Deleting an Approved draw frees its files', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-034', page);
     const approved = data.unique();
     const file = data.ticketFile(approved);
@@ -277,7 +278,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Approved draw deleted, file reusable');
   });
 
-  combinedTest('TC-LD-CHK-042: Approved draw: adding a file used by another live draw is refused', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-042: Approved draw: adding a file used by another live draw is refused', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-042', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);
@@ -293,7 +294,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Refused, target still Approved');
   });
 
-  combinedTest('TC-LD-CHK-048: In Play draw: adding a file used by another live draw is refused', SMOKE_SLOW, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-048: In Play draw: adding a file used by another live draw is refused', CHECKSUM_SLOW, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     combinedTest.setTimeout(SLOW_TIMEOUT);
     await TestHelper.initTest('TC-LD-CHK-048', page);
     const holder = data.unique();
@@ -308,7 +309,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Refused on In Play draw');
   });
 
-  combinedTest('TC-LD-CHK-053: Post Cutoff draw: adding a file used by another live draw is refused', SMOKE_SLOW, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-053: Post Cutoff draw: adding a file used by another live draw is refused', CHECKSUM_SLOW, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     combinedTest.setTimeout(SLOW_TIMEOUT);
     await TestHelper.initTest('TC-LD-CHK-053', page);
     const holder = data.unique();
@@ -323,7 +324,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Refused on Post Cutoff draw');
   });
 
-  combinedTest('TC-LD-CHK-068: A changed file with its OLD checksum is refused', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-068: A changed file with its OLD checksum is refused', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-068', page);
     const draw = data.unique();
     const file = data.ticketFile(draw);
@@ -335,7 +336,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Old checksum refused');
   });
 
-  combinedTest('TC-LD-CHK-086: Calling the server directly cannot skip the checksum check', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-086: Calling the server directly cannot skip the checksum check', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-086', page);
     const captured = captureTicketUpload(page);
     const holder = data.unique();
@@ -349,7 +350,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Server enforces the rule');
   });
 
-  combinedTest('TC-LD-CHK-114: A Completed draw does not allow adding tickets and still protects its ticket file', SMOKE_SLOW, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-114: A Completed draw does not allow adding tickets and still protects its ticket file', CHECKSUM_SLOW, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     combinedTest.setTimeout(SLOW_TIMEOUT);
     await TestHelper.initTest('TC-LD-CHK-114', page);
     const completed = data.imminent(3, 5, 7);
@@ -366,7 +367,7 @@ combinedTest.describe('Global Checksum Validation - Smoke', () => {
     TestHelper.success('Completed draw protects its file');
   });
 
-  combinedTest('TC-LD-CHK-115: A draw waiting for approval still protects its ticket file', SMOKE, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
+  combinedTest('TC-LD-CHK-115: A draw waiting for approval still protects its ticket file', CHECKSUM, async ({ page, lotteryDrawListPage: list, createDrawPage, testLotteryDrawData: data }) => {
     await TestHelper.initTest('TC-LD-CHK-115', page);
     const holder = data.unique();
     const holderFile = data.ticketFile(holder);

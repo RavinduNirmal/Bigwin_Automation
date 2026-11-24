@@ -1,5 +1,5 @@
 /**
- * Hotfix metadata (Allure, keyed by test id). tests/hotfix/hotfix.spec.ts calls registerHotfixMetadata() once.
+ * Hotfix metadata (Allure, keyed by test id). the hotfix specs (tests/e2e/hotfixes/) call registerHotfixMetadata() once.
  * One metadata file per hotfix - add new ones here.
  */
 import { TestMetadataManager, TestMetadataCollection } from '../../../utils/metadata-manager';

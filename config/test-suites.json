@@ -1,0 +1,95 @@
+{
+  "$comment": [
+    "SINGLE SOURCE OF TRUTH for suite membership. Specs stay organised by module under tests/e2e/ (= the Full Test Suite);",
+    "a suite is a SELECTION of test case ids. Read by: playwright.config.ts (TEST_SUITE=<suite> -> grep), scripts/run-suite.js",
+    "(npm run test:smoke | test:regression:focused | test:regression:full | suites:check), Allure tags (utils/metadata-manager.ts)",
+    "and the Excel suite workbooks (test case sheet/). 'includes' = every test of that suite is also in this one",
+    "(smoke is inside focused, focused is inside full). 'limit' = the suite must stay BELOW this many tests until the",
+    "whole BigWin system is covered ('target' = expected size then). A test entry is an id string or {id, why}.",
+    "New hotfix: spec in tests/e2e/hotfixes/, then add its core ids to regression-focused, its other critical ids to",
+    "regression-full, and to smoke ONLY if it changes a critical workflow (replace a smoke test, never exceed the limit)."
+  ],
+  "suites": {
+    "smoke": {
+      "name": "Smoke Suite",
+      "limit": 10,
+      "target": "40 - 50",
+      "purpose": "Proves the build is usable: only the critical end-to-end workflows of the system.",
+      "whenToRun": "Every build / deployment, before any other testing (stop testing if it fails).",
+      "rule": "Only critical workflows (log in, create + approve type / brand / draw, upload ticket file, ticket-file protection). A hotfix is added ONLY if it changes a critical workflow (normally 0-1 test per hotfix).",
+      "includes": [],
+      "groups": [
+        {
+          "area": "Critical workflows",
+          "tests": [
+            { "id": "TC-LOGIN-002", "why": "Admin can log in (password + OTP) - every workflow starts here" },
+            { "id": "TC-LT-CR-002", "why": "Create a lottery type" },
+            { "id": "TC-LT-APR-003", "why": "Lottery type maker-checker: Review -> Approve" },
+            { "id": "TC-LB-CR-013", "why": "Create a lottery brand (4-step wizard)" },
+            { "id": "TC-LB-APR-003", "why": "Lottery brand maker-checker: Review -> Approve" },
+            { "id": "TC-LD-CR-004", "why": "Create a lottery draw and upload its ticket file (DBF + MD5)" },
+            { "id": "TC-LD-APR-005", "why": "Draw maker-checker: Review -> Approve with the upload checksum" },
+            { "id": "TC-LD-CHK-002", "why": "Ticket file protection: a file already used by another live draw is refused (Global Checksum)" },
+            { "id": "TC-HF-MP-018", "why": "Create draw with a Mega Prize in cents - saved and shown, also after approval (hotfix 2026-11-23)" }
+          ]
+        }
+      ]
+    },
+    "regression-focused": {
+      "name": "Focused Regression",
+      "limit": 40,
+      "target": "200 - 300",
+      "purpose": "Smoke + the features changed in this release / hotfix + the features they impact.",
+      "whenToRun": "Every release and every hotfix, after smoke passes.",
+      "rule": "Smoke suite + the core tests of every changed feature / hotfix + impacted neighbours. Each hotfix adds its core tests (typically 3-8); tests of old, stable changes move out to Full Regression only.",
+      "includes": ["smoke"],
+      "groups": [
+        {
+          "area": "Changed feature - Global Checksum Validation (release 2026-11)",
+          "tests": ["TC-LD-CHK-008", "TC-LD-CHK-009", "TC-LD-CHK-012", "TC-LD-CHK-017", "TC-LD-CHK-018", "TC-LD-CHK-019", "TC-LD-CHK-025", "TC-LD-CHK-027",
+                    "TC-LD-CHK-029", "TC-LD-CHK-030", "TC-LD-CHK-033", "TC-LD-CHK-034", "TC-LD-CHK-042", "TC-LD-CHK-068", "TC-LD-CHK-086", "TC-LD-CHK-115"]
+        },
+        {
+          "area": "Hotfix 2026-11-23 - Mega Prize cents & copy-paste",
+          "tests": ["TC-HF-MP-001", "TC-HF-MP-005", "TC-HF-MP-006", "TC-HF-MP-014", "TC-HF-MP-015", "TC-HF-MP-019", "TC-HF-MP-020", "TC-HF-MP-021"]
+        },
+        {
+          "area": "Impacted features - Create Draw / Approve Draw / Mega Prize validation",
+          "tests": ["TC-LD-CR-008", "TC-LD-APR-004", "TC-LD-APR-010", "TC-LD-VAL-010", "TC-LD-VAL-011"]
+        }
+      ]
+    },
+    "regression-full": {
+      "name": "Full Regression",
+      "limit": 100,
+      "target": "1000 - 2000",
+      "purpose": "Complete critical functional coverage of the whole system.",
+      "whenToRun": "Before major releases, monthly, or when a change touches shared code.",
+      "rule": "Focused Regression + the critical / blocker functional tests of every module (CRUD, approval, search, validation, security). Each hotfix adds ALL its critical tests.",
+      "includes": ["regression-focused"],
+      "groups": [
+        { "area": "Login", "tests": ["TC-LOGIN-001", "TC-LOGIN-003", "TC-LOGIN-011"] },
+        {
+          "area": "Lottery Type",
+          "tests": ["TC-LT-NAV-001", "TC-LT-CR-004", "TC-LT-CR-008", "TC-LT-ED-002", "TC-LT-DEL-001", "TC-LT-SRCH-001", "TC-LT-APR-001", "TC-LT-APR-006", "TC-LT-APR-007"]
+        },
+        {
+          "area": "Lottery Brand",
+          "tests": ["TC-LB-NAV-001", "TC-LB-ED-005", "TC-LB-DEL-001", "TC-LB-SRCH-001", "TC-LB-APR-001", "TC-LB-APR-005", "TC-LB-USE-002", "TC-LB-USE-004"]
+        },
+        {
+          "area": "Lottery Draw",
+          "tests": ["TC-LD-NAV-001", "TC-LD-NAV-004", "TC-LD-CR-002", "TC-LD-CR-006", "TC-LD-CR-007", "TC-LD-CR-009", "TC-LD-CR-012", "TC-LD-APR-001",
+                    "TC-LD-APR-002", "TC-LD-APR-003", "TC-LD-APR-006", "TC-LD-APR-007", "TC-LD-SRCH-001", "TC-LD-TBL-003", "TC-LD-ACT-006", "TC-LD-VAL-003",
+                    "TC-LD-VAL-007", "TC-LD-SEC-001", "TC-DBF-001"]
+        },
+        {
+          "area": "Global Checksum Validation (release 2026-11)",
+          "tests": ["TC-LD-CHK-001", "TC-LD-CHK-003", "TC-LD-CHK-006", "TC-LD-CHK-020", "TC-LD-CHK-023", "TC-LD-CHK-024", "TC-LD-CHK-041", "TC-LD-CHK-044",
+                    "TC-LD-CHK-048", "TC-LD-CHK-053", "TC-LD-CHK-063", "TC-LD-CHK-067", "TC-LD-CHK-071", "TC-LD-CHK-087", "TC-LD-CHK-090", "TC-LD-CHK-114"]
+        },
+        { "area": "Hotfix 2026-11-23 - Mega Prize", "tests": ["TC-HF-MP-002", "TC-HF-MP-003", "TC-HF-MP-004", "TC-HF-MP-013", "TC-HF-MP-016"] }
+      ]
+    }
+  }
+}

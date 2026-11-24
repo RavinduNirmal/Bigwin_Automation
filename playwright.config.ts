@@ -54,6 +54,11 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 import { STORAGE_STATE } from './config/auth-paths';
+import { grepFor } from './config/test-suites';
+
+// TEST_SUITE=smoke | regression-focused | regression-full (set by scripts/run-suite.js, e.g. npm run test:smoke)
+// limits the run to that suite's test ids from config/test-suites.json. Unset = the Full Test Suite (all specs).
+const TEST_SUITE = process.env.TEST_SUITE;
 
 export default defineConfig({
   testDir: './tests',
@@ -108,6 +113,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], storageState: STORAGE_STATE },
       dependencies: ['setup'],
+      ...(TEST_SUITE ? { grep: grepFor(TEST_SUITE) } : {}),
     },
     // Comment out other browsers for faster runs during debugging
     // {

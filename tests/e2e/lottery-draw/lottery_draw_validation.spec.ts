@@ -161,7 +161,7 @@ combinedTest.describe('Lottery Draw Create Draw Validation', () => {
     await expect(create.megaPrizeInput, 'Letters must not be accepted').toHaveValue(/^\d*$/);
     await create.megaPrizeInput.fill('1000');
     await create.megaPrizeInput.pressSequentially('.55');
-    // hotfix 2026-11-23: cents are allowed (detailed cases: tests/hotfix/hotfix.spec.ts, TC-HF-MP-*)
+    // hotfix 2026-11-23: cents are allowed (detailed cases: tests/e2e/hotfixes/2026-11-23_mega_prize.spec.ts, TC-HF-MP-*)
     await expect(create.megaPrizeInput, 'Cents should be accepted (Mega Prize hotfix)').toHaveValue('1000.55');
     TestHelper.success('Mega Prize takes digits and cents only');
   });

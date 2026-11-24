@@ -4,9 +4,10 @@ import { drawCases, DrawCase } from '../lottery-draw/base';
 /**
  * HOTFIX 2026-11-23 - Create Draw > Step 1 "Mega Prize": cents + copy & paste (TC-HF-MP-*).
  * Business request: the Mega Prize could only take whole numbers; it must also take cents, and support
- * copy & paste because the amount is copied from another place. Spec: tests/hotfix/hotfix.spec.ts.
+ * copy & paste because the amount is copied from another place. Spec: tests/e2e/hotfixes/2026-11-23_mega_prize.spec.ts.
  * Facts verified on dev 2026-11-23: the box is type="text" inputmode="decimal"; non-digits are dropped,
  * one "." is kept, digits after the 2nd decimal place are cut, the value is sent as a string ("1000000.50").
+ * Suite membership (smoke / focused / full regression) is in config/test-suites.json, not in these tags.
  */
 const PRE = {
   FIELD: 'Logged in as admin; Create Draw page open (Lottery Draws > Draws > Create Draw); clipboard access allowed in the browser',
