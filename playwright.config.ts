@@ -80,6 +80,8 @@ export default defineConfig({
     ['html', { outputFolder: process.env.PW_HTML_DIR || 'playwright-report', open: 'never' }],
     ['list'],
     ['json', { outputFile: process.env.PW_JSON_FILE || 'test-results.json' }],
+    // writes every executed test case result into the Excel workbooks (test case sheet/) - see the reporter header
+    ['./reporters/excel-sync.reporter.ts'],
     [
       'allure-playwright', 
       { 

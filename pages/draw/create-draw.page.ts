@@ -43,6 +43,8 @@ export class CreateDrawPage extends BasePage {
   readonly createDrawButton: Locator;
   /** Text of the last native confirm shown by Next. */
   lastConfirmMessage = '';
+  /** Brand chosen by selectBrand() on the current Create Draw page ('' after open()). */
+  private chosenBrand = '';
 
   static readonly PATH = '/dashboard/draw/create-draw';
   /** Draw codes submitted with "Create Draw" in the current test (afterEach cleanup). */
@@ -146,12 +148,11 @@ export class CreateDrawPage extends BasePage {
   }
 
   async open(): Promise<void> {
-    // Wait for the brand list before choosing a brand: choosing one before GET /api/lottery/brands/simple has
-    // answered leaves the draw's lotteryBrandId at 0 and Create Draw then fails with 400 "Error occured while
-    // creating draw with code ..." (found 2026-11-23 - this was the "intermittent" create-draw failure).
+    // Wait for the brand list (POST /api/lottery/brands/simple) before choosing a brand - see selectBrand().
     const brandList = this.page
-      .waitForResponse((r) => /\/brands\/simple/.test(r.url()) && r.request().method() === 'GET', { timeout: 30000 })
+      .waitForResponse((r) => /\/brands\/simple/.test(r.url()) && r.request().method() === 'POST', { timeout: 30000 })
       .catch(() => null);
+    this.chosenBrand = '';
     await this.page.goto(CreateDrawPage.PATH);
     await brandList;
     await this.page.waitForLoadState('load');
@@ -198,10 +199,24 @@ export class CreateDrawPage extends BasePage {
     return this.megaPrizeInput.inputValue();
   }
 
+  /**
+   * Choose the Lottery Brand. Choosing an option makes the app reload the brand list (POST /api/lottery/brands/simple)
+   * and only then set the draw's brand id. Clicking Next before that reply has been processed leaves lotteryBrandId 0:
+   * Step 2 does not load the brand and Create Draw fails with 400 "Error occured while creating draw with code ..."
+   * (root cause found 2026-11-24 - a real user is slower than the reload). So wait for the reload reply and a render.
+   * goToUploadStep() then verifies the brand was really taken (Step 2 loads it).
+   */
   async selectBrand(name: string): Promise<void> {
     await this.brandSelect.click();
+    const reload = this.page
+      .waitForResponse((r) => /\/brands\/simple/.test(r.url()) && r.request().method() === 'POST', { timeout: 15000 })
+      .catch(() => null);
     await this.page.getByRole('option', { name, exact: true }).click();
     await expect(this.brandSelect).toContainText(name);
+    await reload;
+    // let the app process the reply (state update + render) before the next action
+    await this.page.evaluate(() => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))));
+    this.chosenBrand = name;
   }
 
   /** Fill Step 1 (only the given fields). */
@@ -222,9 +237,16 @@ export class CreateDrawPage extends BasePage {
       this.lastConfirmMessage = d.message();
       await d.accept();
     });
+    // Step 2 loads the chosen brand (GET .../lottery-brand/{id}); no load = the draw has no brand id (would be saved with 0)
+    const brandLoad = this.page
+      .waitForResponse((r) => /\/lottery-brand\/\d+/.test(r.url()) && r.request().method() === 'GET', { timeout: 15000 })
+      .catch(() => null);
     await this.nextButton.click();
     await confirm;
     await expect(this.uploadHeading, 'Step 2 "Upload Ticket List" should be shown').toBeVisible({ timeout: 15000 });
+    if (this.chosenBrand) {
+      expect(await brandLoad, `Step 2 should load the chosen brand "${this.chosenBrand}" (GET lottery-brand/{id}) - without it the draw is created with lotteryBrandId 0`).not.toBeNull();
+    }
   }
 
   /** Step 2: "Select File" -> "Upload Files" dialog -> choose the DBF -> Add. */
@@ -264,7 +286,7 @@ export class CreateDrawPage extends BasePage {
     await this.initiateNowCheckbox.check();
     const { draw: drawRes, upload } = await this.submitCreateDraw(draw.code);
     const drawBody = await drawRes.json().catch(() => ({}));
-    expect(drawRes.status(), `Creating draw ${draw.code} should succeed: ${JSON.stringify(drawBody)}`).toBe(201);
+    expect(drawRes.status(), `Creating draw ${draw.code} should succeed: ${JSON.stringify(drawBody)} - request sent: ${drawRes.request().postData() ?? '(none)'}`).toBe(201);
     expect(upload, 'Ticket upload should be requested').not.toBeNull();
     const uploadBody = await upload!.json().catch(() => ({}));
     expect(upload!.status(), `Ticket upload should succeed: ${JSON.stringify(uploadBody)}`).toBeLessThan(400);
