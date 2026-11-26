@@ -34,6 +34,8 @@ interface SyncResult {
   testData?: string;
   steps?: string[];
   expectedResult?: string;
+  /** known defect in plain words (metadata actualResult) - shown as the Actual Result of a failure */
+  actualResult?: string;
   module?: string;
 }
 
@@ -63,7 +65,7 @@ class ExcelSyncReporter implements Reporter {
 
   async onEnd(_result: FullResult): Promise<void> {
     if (!this.enabled || this.tests.size === 0) return;
-    const metadata = AllTestMetadata as Record<string, TestMetadata & { preconditions?: string; testData?: string; expectedResult?: string }>;
+    const metadata = AllTestMetadata as Record<string, TestMetadata & { preconditions?: string; testData?: string; expectedResult?: string; actualResult?: string }>;
     const results: SyncResult[] = [];
     for (const [id, { test, last }] of this.tests) {
       const outcome = test.outcome();
@@ -83,6 +85,7 @@ class ExcelSyncReporter implements Reporter {
         testData: md?.testData,
         steps: md?.steps,
         expectedResult: md?.expectedResult,
+        actualResult: md?.actualResult,
         module: md?.feature,
       });
     }

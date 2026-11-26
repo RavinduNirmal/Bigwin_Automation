@@ -55,6 +55,8 @@
     "suites:check": "node scripts/run-suite.js --check",
     "excel:sync": "python scripts/excel/sync_results.py --pending",
     "excel:normalize": "python scripts/excel/sync_results.py --normalize",
+    "excel:autofit": "python scripts/excel/xlsx_layout.py",
+    "excel:refresh": "npx playwright test -c scripts/excel/metadata-dump.config.ts && python scripts/excel/refresh_cases.py",
     "test:lottery-draw:ci": "npx playwright test lottery-draw/ --grep-invert @slow --reporter=list,json,html,allure-playwright",
     "test:dbf": "npx playwright test tests/unit/ticket-dbf.service.spec.ts",
     "test:allure": "node scripts/test-with-allure.js",

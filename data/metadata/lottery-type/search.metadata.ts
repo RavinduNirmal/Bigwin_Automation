@@ -1,51 +1,69 @@
 import { TestMetadataCollection } from '../../../utils/metadata-manager';
+import { ltCases, LT_PRE, LT_POST } from './base';
 
-/** Allure metadata for tests/e2e/lottery-type/lottery_type_search.spec.ts */
-const base = { epic: 'Lottery Management', feature: 'Search Lottery Types', owner: 'QA Team' } as const;
+/** Metadata for tests/e2e/lottery-type/lottery_type_search.spec.ts - plain-language, see base.ts. */
+const SEARCH_BROKEN = 'Search does nothing: the list does not change and every lottery type stays listed (the search text is not used).';
 
-export const LotteryTypeSearchMetadata: TestMetadataCollection = {
+export const LotteryTypeSearchMetadata: TestMetadataCollection = ltCases('Search Lottery Types', {
   'TC-LT-SRCH-001': {
-    ...base, story: 'Search by Code', severity: 'critical', tags: ['Smoke', 'Regression', 'Search'],
-    tms: 'TC-LT-SRCH-001',
-    description: 'Searching an exact Code shows that lottery type and hides the others',
-    preconditions: 'Two lottery types created by the test exist',
-    steps: ['Type the first record\'s Code in "Search..."', 'Press Enter'],
-    expectedResult: 'First record shown; second hidden',
-    actualResult: 'Search does nothing - the list API ignores the query, so every lottery type stays listed',
+    story: 'Search by Code', severity: 'critical', tags: ['Smoke', 'Regression', 'Search'],
+    description: 'Searching a Code shows only that lottery type\nWhy: admins find a lottery type by its Code.',
+    preconditions: LT_PRE.TWO,
+    testData: '- Lottery type A and lottery type B (both created by the test)\n- Search text: the full Code of A',
+    steps: [
+      'Type the Code of A in the "Search..." box and press Enter',
+      'Look at the rows',
+    ],
+    expectedResult: '- A is listed\n- B is NOT listed',
+    actualResult: SEARCH_BROKEN,
   },
   'TC-LT-SRCH-002': {
-    ...base, story: 'Search by Type', severity: 'normal', tags: ['Regression', 'Search'],
-    tms: 'TC-LT-SRCH-002',
-    description: 'Searching text from the Type shows every matching lottery type',
-    preconditions: 'Two tagged and one untagged lottery types created by the test exist',
-    steps: ['Search the shared tag', 'Press Enter'],
-    expectedResult: 'Both tagged records shown; untagged one hidden',
-    actualResult: 'Search does nothing - the list API ignores the query, so every lottery type stays listed',
+    story: 'Search by Type', severity: 'normal', tags: ['Regression', 'Search'],
+    description: 'Searching part of a Type name shows every lottery type with that text\nWhy: admins may only remember part of a name.',
+    preconditions: `${LT_PRE.PAGE}\n- The test has created two lottery types whose Type contains the same word, and one that does not`,
+    testData: '- Type A: "Tag<number> Item 1", Type B: "Tag<number> Item 2" (shared word "Tag<number>")\n- Type C: "Auto Type <number>" (without the word)\n- Search text: "Tag<number>"',
+    steps: [
+      'Type the shared word in the "Search..." box and press Enter',
+      'Look at the rows',
+    ],
+    expectedResult: '- A and B are listed\n- C is NOT listed',
+    actualResult: SEARCH_BROKEN,
   },
   'TC-LT-SRCH-003': {
-    ...base, story: 'Search by Code', severity: 'minor', tags: ['Regression', 'Search'],
-    tms: 'TC-LT-SRCH-003',
-    description: 'Search is case-insensitive',
-    preconditions: 'Two lottery types created by the test exist',
-    steps: ['Search the first Code in lower case'],
-    expectedResult: 'First record shown; second hidden',
-    actualResult: 'Search does nothing - the list API ignores the query, so every lottery type stays listed',
+    story: 'Search by Code', severity: 'minor', tags: ['Regression', 'Search'],
+    description: 'Search ignores upper / lower case\nWhy: users should not have to remember how a Code was capitalised.',
+    preconditions: LT_PRE.TWO,
+    testData: '- Search text: the Code of A in lower case (e.g. "at12345678901")',
+    steps: [
+      'Type the Code of A in lower case in "Search..." and press Enter',
+      'Look at the rows',
+    ],
+    expectedResult: '- A is listed\n- B is NOT listed',
+    actualResult: SEARCH_BROKEN,
   },
   'TC-LT-SRCH-004': {
-    ...base, story: 'No Results', severity: 'normal', tags: ['Regression', 'Search', 'Negative'],
-    tms: 'TC-LT-SRCH-004',
-    description: 'A term that matches nothing shows no rows',
-    preconditions: 'User is on the Lottery Type page',
-    steps: ['Search a random term that no record contains'],
-    expectedResult: 'No data rows are shown',
-    actualResult: 'Search does nothing - a search that matches nothing still lists every lottery type',
+    story: 'No Results', severity: 'normal', tags: ['Regression', 'Search'],
+    description: 'Searching text that no lottery type contains shows an empty list\nWhy: the user must see clearly that nothing matched.',
+    preconditions: LT_PRE.PAGE,
+    testData: '- Search text: "NoMatchAT<unique number>" (matches no lottery type)',
+    steps: [
+      'Type the search text in "Search..." and press Enter',
+      'Look at the rows',
+    ],
+    expectedResult: '- No rows are listed',
+    actualResult: 'Every lottery type is still listed - a search that matches nothing does not empty the list.',
+    postconditions: LT_POST.NOTHING,
   },
   'TC-LT-SRCH-005': {
-    ...base, story: 'Clear Search', severity: 'normal', tags: ['Regression', 'Search'],
-    tms: 'TC-LT-SRCH-005',
-    description: 'Clearing the search shows all lottery types again',
-    preconditions: 'Two lottery types created by the test exist',
-    steps: ['Search the first Code', 'Clear the box and press Enter'],
-    expectedResult: 'Both records listed again',
+    story: 'Clear Search', severity: 'normal', tags: ['Regression', 'Search'],
+    description: 'Clearing the search box shows all lottery types again\nWhy: the user must be able to go back to the full list.',
+    preconditions: LT_PRE.TWO,
+    testData: '- Search text: the Code of A, then an empty box',
+    steps: [
+      'Search the Code of A (type it in "Search..." and press Enter)',
+      'Delete the text in the search box and press Enter',
+      'Look at the rows',
+    ],
+    expectedResult: '- A and B are both listed again',
   },
-};
+});

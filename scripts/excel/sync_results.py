@@ -219,6 +219,40 @@ def copy_row_style(ws, src_row, dst_row, ncols=25):
     ws.row_dimensions[dst_row].height = ws.row_dimensions[src_row].height
 
 
+# Recurring technical failures -> plain words for people who do not know the system (the raw error stays in Comments)
+PLAIN_ERRORS = [
+    (re.compile(r'Required request body is missing', re.I),
+     'Blocked by a server problem: the system refused to save the new lottery brand ("Required request body is missing" - an intermittent '
+     'backend error), so the rest of the test could not run.'),
+    (re.compile(r'Error occured while creating draw', re.I),
+     'Blocked by a server problem: the system refused to create the draw ("Error occured while creating draw ..."), so the rest of the test could not run.'),
+    (re.compile(r'Timeout \d+ms exceeded|timed out', re.I),
+     'The page did not respond in time (time-out), so the step could not be completed.'),
+    (re.compile(r'net::ERR_|ECONNRESET|socket hang up', re.I),
+     'The portal could not be reached (network error), so the test could not run.'),
+]
+
+
+def plain_error(err):
+    """A failure in plain words: a known cause, or the assertion message without technical noise."""
+    err = str(err or '').strip()
+    for rx, text in PLAIN_ERRORS:
+        if rx.search(err):
+            return text
+    first = re.sub(r'^(Error|TimeoutError):\s*', '', err.split(' | ')[0]).strip()
+    return f'The result was not as expected: {first}' if first else 'The test failed - see the Playwright report.'
+
+
+def actual_text(res):
+    """Actual Results text for readers: the known defect in plain words when there is one, else the failure in plain words."""
+    d = res['date']
+    if res['status'] == 'Pass':
+        return f'As expected (automated run {d})' + (' - passed on retry (flaky)' if res.get('flaky') else '')
+    if res.get('actualResult'):
+        return f"{res['actualResult']}\n(automated run {d})"
+    return f"{plain_error(res.get('error'))}\n(automated run {d})"
+
+
 def module_label(tc, res):
     for pre, label in MODULE_OF:
         if tc.startswith(pre):
@@ -239,7 +273,7 @@ def new_bug_row(bs, bug_at, res, rows):
         B_MOD: f"{module_label(res['id'], res)} / {res['id']}", B_TYPE: g('type') or 'Functional', B_ID: res['bug']['id'],
         B_SUM: g('desc') or res.get('description') or res.get('title'), B_ENV: 'Dev', B_PRE: g('pre') or res.get('preconditions') or '-',
         B_DATA: g('data') or res.get('testData') or '-', B_STEPS: g('steps') or '\n'.join(res.get('steps') or []), B_EXP: g('expected') or res.get('expectedResult', ''),
-        B_ACT: res.get('error') or 'Failed', B_ATT: f"Playwright / Allure report of {res['id']} ({res['date']})", B_FIXBY: '',
+        B_ACT: res.get('actualResult') or res.get('error') or 'Failed', B_ATT: f"Playwright / Allure report of {res['id']} ({res['date']})", B_FIXBY: '',
         B_REPBY: EXECUTOR, B_REPDATE: res['date'], B_REPVER: 'Dev', B_SEV: sev, B_PRI: pri, B_QA: 'Open', B_DEV: '', B_RETVER: '', B_RETDATES: '',
         B_FIXVER: '', B_CLOSED: '', B_CLOSEDBY: '',
         B_COMM: f"Raised automatically by the Playwright run on {res['date']} ({res.get('spec', '')}) - the test fails until fixed.",
@@ -275,7 +309,7 @@ def apply(wb, entries):
                 elif bug['action'] == 'reopen':
                     bs.cell(br, B_QA).value, bs.cell(br, B_DEV).value = 'ReOpen', ''
                     bs.cell(br, B_CLOSED).value, bs.cell(br, B_CLOSEDBY).value = '', ''
-                    bs.cell(br, B_ACT).value = res.get('error') or bs.cell(br, B_ACT).value
+                    bs.cell(br, B_ACT).value = res.get('actualResult') or res.get('error') or bs.cell(br, B_ACT).value
                     bs.cell(br, B_RETDATES).value = append_text(bs.cell(br, B_RETDATES).value, d)
                     bs.cell(br, B_COMM).value = append_text(bs.cell(br, B_COMM).value, f'Retest {d}: FAILED again in the automated run - bug reopened.')
                 elif bug['action'] == 'still':
@@ -289,11 +323,12 @@ def apply(wb, entries):
             if cols.get('matrix'):
                 changed += 1
                 continue
-            ws.cell(r, cols['actual']).value = (f'As expected (automated run {d})' + (' - passed on retry (flaky)' if res.get('flaky') else '')) if st == 'Pass' \
-                else f"Failed (automated run {d}): {res.get('error') or 'see the Playwright report'}"
+            ws.cell(r, cols['actual']).value = actual_text(res)
             if cols.get('comment'):
-                ws.cell(r, cols['comment']).value = set_comment_line(ws.cell(r, cols['comment']).value,
-                                                                     f"Last automated run: {d} {st.upper()} ({res.get('spec', '')})")
+                line = f"Last automated run: {d} {st.upper()} ({res.get('spec', '')})"
+                if st == 'Fail' and res.get('error'):
+                    line += f" - technical error: {res['error']}"
+                ws.cell(r, cols['comment']).value = set_comment_line(ws.cell(r, cols['comment']).value, line)
             if cols.get('bug') and bug:
                 x = ws.cell(r, cols['bug'])
                 x.value = bug['id']
@@ -320,6 +355,8 @@ def normalize(wb):
 
 
 def save(wb, path):
+    from xlsx_layout import autofit   # rows tall enough for their wrapped text (Excel does not re-measure on open)
+    autofit(wb)
     try:
         wb.save(path)
         return True

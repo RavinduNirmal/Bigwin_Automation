@@ -1,77 +1,81 @@
-import { brandCases, BRAND_PRECONDITION as P } from './base';
+import { brandCases, BRAND_PRE, BRAND_STEP } from './base';
 
-/** Allure metadata for tests/e2e/lottery-brand/lottery_brand_use.spec.ts (from specs/lottery-brand-test-plan.md). */
-export const LotteryBrandUseMetadata = brandCases({
-  "TC-LB-USE-001": {
-    feature: "Brand Ready For Use", story: "Create Draw brand dropdown only requests APPROVED + ACTIVE brands", severity: 'normal', tags: ["Regression","Approval"],
-    tms: "TC-LB-USE-001",
-    description: "Create Draw brand dropdown only requests APPROVED + ACTIVE brands",
-    preconditions: P.OWN_BRAND,
-    steps: ["Sidebar Lottery Draws > Draws > Create Draw (/dashboard/draw/create-draw) (read-only; NEVER click Next/submit); open 'Lottery Brand'"],
-    expectedResult: "Request POST /api/lottery/brands/simple with body {approvalStatus:'APPROVED', status:'ACTIVE'}; dropdown lists brand NAMES only (41 options)",
+/**
+ * Metadata for tests/e2e/lottery-brand/lottery_brand_use.spec.ts - plain-language, see base.ts.
+ * "Ready for use" = the brand is offered in Lottery Draws > Create Draw > "Lottery Brand" (checked by looking only).
+ */
+export const LotteryBrandUseMetadata = brandCases('Brand Ready For Use', {
+  'TC-LB-USE-001': {
+    story: 'Create Draw brand dropdown only requests APPROVED + ACTIVE brands', severity: 'normal', tags: ['Regression', 'Approval'],
+    description: 'Create Draw only offers brands that are approved and active\nWhy: draws may only be created for checked, switched-on brands.',
+    preconditions: '- Logged in to the BigWin admin portal (dev) as admin',
+    testData: '- The brands already in the system',
+    steps: [BRAND_STEP.DRAW_LIST, 'Look at the options'],
+    expectedResult: '- Only brand NAMES are listed, and only brands that are Approved and Active (about 41 options on dev)',
+    postconditions: 'Nothing is changed in the system (no draw is created)',
   },
-  "TC-LB-USE-002": {
-    feature: "Brand Ready For Use", story: "Under Review brand is not offered", severity: 'critical', tags: ["Smoke","Regression","Approval"],
-    tms: "TC-LB-USE-002",
-    description: "Under Review brand is not offered",
-    preconditions: P.OWN_BRAND,
-    steps: ["Create own brand (Under Review), open the Create Draw brand dropdown"],
-    expectedResult: "Own brand NOT listed. VERIFIED on the edited-and-returned-to-Under-Review brand (41 options, no ATPLAN)",
+  'TC-LB-USE-002': {
+    story: 'Under Review brand is not offered', severity: 'critical', tags: ['Smoke', 'Regression', 'Approval'],
+    description: 'A brand that is still "Under Review" cannot be used for a draw\nWhy: unchecked brands must not be sold.',
+    preconditions: BRAND_PRE.OWN,
+    testData: '- The Name of the test\'s brand (Stage "Under Review")',
+    steps: [BRAND_STEP.DRAW_LIST, 'Look for the test\'s brand'],
+    expectedResult: '- The brand is NOT in the list',
   },
-  "TC-LB-USE-003": {
-    feature: "Brand Ready For Use", story: "Pending Approval brand is not offered", severity: 'critical', tags: ["Smoke","Regression","Approval"],
-    tms: "TC-LB-USE-003",
-    description: "Pending Approval brand is not offered",
-    preconditions: P.OWN_BRAND,
-    steps: ["Review own brand, open the Create Draw dropdown"],
-    expectedResult: "Own brand NOT listed (41 options)",
+  'TC-LB-USE-003': {
+    story: 'Pending Approval brand is not offered', severity: 'critical', tags: ['Smoke', 'Regression', 'Approval'],
+    description: 'A brand that is reviewed but not yet approved cannot be used for a draw\nWhy: both checks must be done first.',
+    preconditions: BRAND_PRE.OWN,
+    testData: '- The Name of the test\'s brand',
+    steps: [`${BRAND_STEP.OPEN_PAGE}; click "Review"`, BRAND_STEP.DRAW_LIST, 'Look for the test\'s brand'],
+    expectedResult: '- The brand is NOT in the list',
   },
-  "TC-LB-USE-004": {
-    feature: "Brand Ready For Use", story: "Approved brand is offered", severity: 'critical', tags: ["Smoke","Regression","Approval"],
-    tms: "TC-LB-USE-004",
-    description: "Approved brand is offered",
-    preconditions: P.OWN_BRAND,
-    steps: ["Approve own brand, reload Create Draw, open the dropdown"],
-    expectedResult: "Own brand name listed (42 options). Do not select or submit",
+  'TC-LB-USE-004': {
+    story: 'Approved brand is offered', severity: 'critical', tags: ['Smoke', 'Regression', 'Approval'],
+    description: 'An approved brand can be chosen for a new draw\nWhy: approval is what makes a brand usable.',
+    preconditions: BRAND_PRE.APPROVED,
+    testData: '- The Name of the test\'s approved brand',
+    steps: [BRAND_STEP.DRAW_LIST, 'Look for the test\'s brand (do not choose it)', BRAND_STEP.CLEANUP],
+    expectedResult: '- The brand IS in the list',
   },
-  "TC-LB-USE-005": {
-    feature: "Brand Ready For Use", story: "Edited Approved brand is not offered until re-approved", severity: 'critical', tags: ["Smoke","Regression","Approval"],
-    tms: "TC-LB-USE-005",
-    description: "Edited Approved brand is not offered until re-approved",
-    preconditions: P.OWN_BRAND,
-    steps: ["Edit the approved brand, check the dropdown; Review + Approve, check again"],
-    expectedResult: "NOT listed while Under Review/Pending Approval (verified); listed once re-approved",
+  'TC-LB-USE-005': {
+    story: 'Edited Approved brand is not offered until re-approved', severity: 'critical', tags: ['Smoke', 'Regression', 'Approval'],
+    description: 'After an approved brand is edited it cannot be used until it is approved again\nWhy: the unchecked new version must not be sold.',
+    preconditions: BRAND_PRE.APPROVED,
+    testData: '- New English description: "Edited description <number>"',
+    steps: ['Change the brand ("Update" > "Save Changes" - it goes back to "Under Review")', `${BRAND_STEP.DRAW_LIST} - look for the brand`, 'Review and Approve the brand again', 'Open the list again and look for it', BRAND_STEP.CLEANUP],
+    expectedResult: '- While "Under Review" / "Pending Approval" the brand is NOT offered\n- Once approved again it IS offered',
   },
-  "TC-LB-USE-006": {
-    feature: "Brand Ready For Use", story: "DISABLED brand is not offered", severity: 'normal', tags: ["Regression","Approval"],
-    tms: "TC-LB-USE-006",
-    description: "DISABLED brand is not offered",
-    preconditions: P.OWN_BRAND,
-    steps: ["Set an approved brand to DISABLED and re-approve"],
-    expectedResult: "Not listed",
+  'TC-LB-USE-006': {
+    story: 'DISABLED brand is not offered', severity: 'normal', tags: ['Regression', 'Approval'],
+    description: 'A switched-off brand cannot be used for a draw, even when approved\nWhy: switched-off brands must not be sold.',
+    preconditions: BRAND_PRE.APPROVED,
+    testData: '- New Status: DISABLED',
+    steps: ['Set the brand to Status "DISABLED" and approve it again', BRAND_STEP.DRAW_LIST, 'Look for the brand'],
+    expectedResult: '- The brand is NOT in the list',
   },
-  "TC-LB-USE-007": {
-    feature: "Brand Ready For Use", story: "Deleted brand is not offered", severity: 'normal', tags: ["Regression","Approval"],
-    tms: "TC-LB-USE-007",
-    description: "Deleted brand is not offered",
-    preconditions: P.OWN_BRAND,
-    steps: ["Approve, delete, open the dropdown"],
-    expectedResult: "Not listed",
+  'TC-LB-USE-007': {
+    story: 'Deleted brand is not offered', severity: 'normal', tags: ['Regression', 'Approval'],
+    description: 'A deleted brand cannot be used for a draw\nWhy: deleted brands must never be sold.',
+    preconditions: BRAND_PRE.APPROVED,
+    testData: '- The approved brand created by the test',
+    steps: ['Delete the brand (row "..." menu > "Delete")', BRAND_STEP.DRAW_LIST, 'Look for the brand'],
+    expectedResult: '- The brand is NOT in the list',
   },
-  "TC-LB-USE-008": {
-    feature: "Brand Ready For Use", story: "Brand whose Lottery Type is later edited, disabled or deleted", severity: 'normal', tags: ["Regression","Approval"],
-    tms: "TC-LB-USE-008",
-    description: "Brand whose Lottery Type is later edited, disabled or deleted",
-    preconditions: P.OWN_BRAND,
-    steps: ["Using an ATPLAN-owned lottery type, approve a brand on it, then edit/disable/delete the type"],
-    expectedResult: "Product decision: brand should be flagged/blocked or follow the type; record actual",
+  'TC-LB-USE-008': {
+    story: 'Brand whose Lottery Type is later edited, disabled or deleted', severity: 'normal', tags: ['Regression', 'Approval'],
+    description: 'What happens to an approved brand when its lottery type is changed, switched off or deleted\nWhy: a brand should not stay usable on a type that is no longer valid.',
+    preconditions: '- Logged in as admin\n- A lottery type created by the test, and an approved brand built on it (manual test)',
+    testData: '- The test\'s own lottery type and brand',
+    steps: ['Edit, then switch off, then delete the lottery type', 'After each change check the brand and the Create Draw "Lottery Brand" list'],
+    expectedResult: '- To be confirmed by the business: the brand is flagged / blocked, or follows the lottery type - record what happens',
   },
-  "TC-LB-USE-009": {
-    feature: "Brand Ready For Use", story: "Lottery type shown in the list matches the brand's type", severity: 'normal', tags: ["Regression","Approval"],
-    tms: "TC-LB-USE-009",
-    description: "Lottery type shown in the list matches the brand's type",
-    preconditions: P.OWN_BRAND,
-    steps: ["Create a brand with type Passive and read the row"],
-    expectedResult: "Type column 'Passive' (API lotteryType code PASS)",
+  'TC-LB-USE-009': {
+    story: 'Lottery type shown in the list matches the brand\'s type', severity: 'normal', tags: ['Regression', 'Approval'],
+    description: 'The brand list shows the lottery type the brand was created with\nWhy: admins rely on the Type column.',
+    preconditions: BRAND_PRE.LIST,
+    testData: '- New brand with Lottery Type "Passive"',
+    steps: [BRAND_STEP.CREATE, BRAND_STEP.FIND, 'Read the Type column', BRAND_STEP.CLEANUP],
+    expectedResult: '- The Type column shows "Passive"',
   },
 });

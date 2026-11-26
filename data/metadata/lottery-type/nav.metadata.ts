@@ -1,49 +1,68 @@
 import { TestMetadataCollection } from '../../../utils/metadata-manager';
+import { ltCases, LT_PRE, LT_POST } from './base';
 
-/** Allure metadata for tests/e2e/lottery-type/lottery_type_nav.spec.ts */
-const base = { epic: 'Lottery Management', owner: 'QA Team' } as const;
-
-export const LotteryTypeNavigationMetadata: TestMetadataCollection = {
+/** Metadata for tests/e2e/lottery-type/lottery_type_nav.spec.ts - plain-language, see base.ts. */
+export const LotteryTypeNavigationMetadata: TestMetadataCollection = ltCases('Table Display', {
   'TC-LT-NAV-001': {
-    ...base, feature: 'Navigation', story: 'Sidebar Navigation', severity: 'critical', tags: ['Smoke', 'Regression', 'Navigation'],
-    tms: 'TC-LT-NAV-001',
-    description: 'Sidebar "Lottery" -> "Lottery Type" opens the Lottery Type list',
-    preconditions: 'User is logged in as admin',
-    steps: ['Expand "Lottery" in the sidebar', 'Click "Lottery Type"', 'Verify URL, heading and page title'],
-    expectedResult: '/dashboard/lottery/lottery-type with heading "Lottery Type" and title "Lottery: List | BigWin"',
+    feature: 'Navigation', story: 'Sidebar Navigation', severity: 'critical', tags: ['Smoke', 'Regression', 'Navigation'],
+    description: 'The left menu opens the Lottery Type page\nWhy: this is how admins reach the lottery types.',
+    preconditions: '- Logged in to the BigWin admin portal (dev) as admin\n- Any page of the portal is open',
+    testData: '- None',
+    steps: [
+      'In the left menu click "Lottery" to open it',
+      'Click "Lottery Type"',
+      'Look at the page heading, the browser tab title and the address',
+    ],
+    expectedResult: '- The page heading is "Lottery Type"\n- The browser tab title is "Lottery: List | BigWin"\n- The address ends with /dashboard/lottery/lottery-type',
+    postconditions: LT_POST.NOTHING,
   },
   'TC-LT-NAV-002': {
-    ...base, feature: 'Table Display', story: 'Table Structure', severity: 'normal', tags: ['Regression', 'UI'],
-    tms: 'TC-LT-NAV-002',
-    description: 'Lottery Type table shows the Code, Type Description, Status and Stage columns',
-    preconditions: 'User is on the Lottery Type page',
-    steps: ['Verify the table and its column headers'],
-    expectedResult: 'Columns Code, Type Description, Status, Stage are shown',
+    story: 'Table Structure', severity: 'normal', tags: ['Regression', 'UI'],
+    description: 'The lottery type list shows the right columns\nWhy: admins need Code, Type, Status and Stage at a glance.',
+    preconditions: LT_PRE.PAGE,
+    testData: '- None',
+    steps: [
+      'Look at the column headings of the table',
+    ],
+    expectedResult: '- The columns "Code", "Type Description", "Status" and "Stage" are shown',
+    postconditions: LT_POST.NOTHING,
   },
   'TC-LT-NAV-003': {
-    ...base, feature: 'Table Display', story: 'Page Controls', severity: 'normal', tags: ['Regression', 'UI'],
-    tms: 'TC-LT-NAV-003',
-    description: 'Page shows Add New Type, the search box, All/Active/Deleted tabs (All selected) and page info',
-    preconditions: 'User is on the Lottery Type page',
-    steps: ['Verify Add New Type button', 'Verify search box', 'Verify tabs', 'Verify "Page X of Y"'],
-    expectedResult: 'All controls visible; "All" tab selected',
-    actualResult: 'No tab is selected when the page loads ("All" is not selected)',
+    story: 'Page Controls', severity: 'normal', tags: ['Regression', 'UI'],
+    description: 'The page shows its controls and starts on the "All" tab\nWhy: admins need to add, search and filter lottery types, and should see all of them first.',
+    preconditions: LT_PRE.PAGE,
+    testData: '- None',
+    steps: [
+      'Look for the "Add New Type" button and the "Search..." box',
+      'Look at the tabs "All", "Active" and "Deleted" - which one is selected?',
+      'Look at the page information under the table',
+    ],
+    expectedResult: '- "Add New Type" and "Search..." are shown\n- The tabs "All", "Active" and "Deleted" are shown and "All" is selected\n- "Page X of Y" is shown under the table',
+    actualResult: 'No tab is selected when the page opens ("All" is not highlighted), although every lottery type is listed.',
+    postconditions: LT_POST.NOTHING,
   },
   'TC-LT-NAV-004': {
-    ...base, feature: 'Table Display', story: 'Row Actions', severity: 'critical', tags: ['Smoke', 'Regression', 'UI'],
-    tms: 'TC-LT-NAV-004',
-    description: 'Row actions menu offers Edit, Delete and Logs',
-    preconditions: 'A lottery type created by the test exists',
-    steps: ['Open the actions menu of the test\'s row'],
-    expectedResult: 'Menu items Edit, Delete and Logs are shown',
+    story: 'Row Actions', severity: 'critical', tags: ['Smoke', 'Regression', 'UI'],
+    description: 'Each row has a menu with Edit, Delete and Logs\nWhy: these are the actions an admin needs for a lottery type.',
+    preconditions: LT_PRE.ONE,
+    testData: '- The lottery type created by the test',
+    steps: [
+      'Find the row by its Code and click the "..." actions button at the end of the row',
+      'Look at the menu items',
+      'Close the menu (Escape)',
+    ],
+    expectedResult: '- The menu shows "Edit", "Delete" and "Logs"',
   },
   'TC-LT-NAV-005': {
-    ...base, feature: 'Navigation', story: 'Audit Logs', severity: 'minor', tags: ['Regression', 'Navigation'],
-    tms: 'TC-LT-NAV-005',
-    description: 'Row menu "Logs" opens the audit log for lottery types',
-    preconditions: 'A lottery type created by the test exists',
-    steps: ['Open the row menu', 'Click Logs'],
-    expectedResult: 'The audit log page opens',
-    actualResult: 'Row menu "Logs" opens /dashboard/audit-log?drawId=LOTTERY_TYPE - a 404 "Nothing here!" page',
+    feature: 'Navigation', story: 'Audit Logs', severity: 'minor', tags: ['Regression', 'Navigation'],
+    description: '"Logs" in the row menu shows the change history of lottery types\nWhy: admins must be able to see who changed what.',
+    preconditions: LT_PRE.ONE,
+    testData: '- The lottery type created by the test',
+    steps: [
+      'Open the "..." menu of the row and click "Logs"',
+      'Look at the page that opens',
+    ],
+    expectedResult: '- The audit log (change history) page opens',
+    actualResult: '"Logs" opens /dashboard/audit-log?drawId=LOTTERY_TYPE, which is a "Nothing here!" (404 - page not found) page.',
   },
-};
+});
